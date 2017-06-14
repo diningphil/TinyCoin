@@ -2,5 +2,9 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="/Users/diningphil/git/TinyCoin/djep-1.0.0.jar"/>
+	<classpathentry kind="lib" path="/Users/diningphil/git/TinyCoin/jep-2.3.0.jar"/>
+	<classpathentry kind="lib" path="/Users/diningphil/git/TinyCoin/peersim-1.0.5.jar"/>
+	<classpathentry kind="lib" path="/Users/diningphil/git/TinyCoin/peersim-doclet.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
