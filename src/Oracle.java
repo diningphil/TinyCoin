@@ -24,15 +24,18 @@ public class Oracle implements Control{
 	 */
 	@Override
 	public boolean execute() {
-	
+		System.out.println("Countdown is " + sendCountdown);
+		
 		if (sendCountdown == -1)
 			sendCountdown = setCountdown();
 		
 		else if(sendCountdown > 0)
 			sendCountdown--;
 		
-		else
+		else {
 			sendMined();
+			sendCountdown = setCountdown(); // reset
+		}
 		
 		return false; // continue execution
 	}
@@ -58,12 +61,10 @@ public class Oracle implements Control{
 			// pick an asic miner
 			chosenNode = pickAtRandom(sI.asics);
 			
-		  // TODO SEND MESSAGE to chosenNode
-		  EDSimulator.add(0, message, sender, pid);
-		
-		
-		
-		
+		// Send the message
+		TinyCoinMessage message = new TinyCoinMessage(SharedInfo.MINED, null);
+		EDSimulator.add(0, message, Network.get(chosenNode), pid);
+				
 	}
 
 	private int pickAtRandom(List<Integer> set) {

@@ -9,9 +9,9 @@ import java.util.List;
 public class SharedInfo {
     private static SharedInfo instance = null;
 
-    private static final int MINED       = 0;
-    private static final int TRANSACTION = 1;
-    private static final int BLOCK       = 2;
+    public static final int MINED       = 0;
+    public static final int TRANSACTION = 1;
+    public static final int BLOCK       = 2;
  
     public static final int blockReward = 10;
     public static final int addLatencyPerTransaction = 1;
