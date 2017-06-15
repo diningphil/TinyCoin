@@ -1,6 +1,4 @@
 import java.util.List;
-import java.util.Random;
-
 import peersim.config.*;
 import peersim.core.*;
 import peersim.edsim.EDSimulator;
@@ -8,7 +6,7 @@ import peersim.edsim.EDSimulator;
 public class Oracle implements Control{
 
 	private static final String PAR_PROT = "protocol";
-	private final int pid;
+	private int pid;
 
 	public Oracle(String prefix) {
 		pid = Configuration.getPid(prefix + "." + PAR_PROT);
@@ -24,7 +22,6 @@ public class Oracle implements Control{
 	 */
 	@Override
 	public boolean execute() {
-		System.out.println("Countdown is " + sendCountdown);
 		
 		if (sendCountdown == -1)
 			sendCountdown = setCountdown();
@@ -42,11 +39,10 @@ public class Oracle implements Control{
 	
 	
 	private void sendMined() {
-		Random r = new Random();	
-		int power = (int) r.nextFloat()*100;
+		int power = (int) (SharedInfo.random.nextFloat()*100);
 		SharedInfo sI = SharedInfo.getSharedInfo();
 		
-		int chosenNode = -1;
+		long chosenNode = -1;
 		
 		if (power <= SharedInfo.cpuPower)
 			// pick a cpu miner
@@ -62,19 +58,23 @@ public class Oracle implements Control{
 			chosenNode = pickAtRandom(sI.asics);
 			
 		// Send the message
-		TinyCoinMessage message = new TinyCoinMessage(SharedInfo.MINED, null);
-		EDSimulator.add(0, message, Network.get(chosenNode), pid);
+		System.out.println("Sending \"mined\" msg through protocol " + Configuration.lookupPid(pid) + " to node " + chosenNode);
+		//System.out.println("Which is a " + sI.miners.get(chosenNode));
+		
+		TinyCoinMessage message = new TinyCoinMessage(TinyCoinMessage.MINED, 0);
+		long delay = 0;
+		Node dest = sI.idToNode.get(chosenNode);
+
+		EDSimulator.add(delay, message, dest, pid); // 0 DELAY HERE!
 				
 	}
 
-	private int pickAtRandom(List<Integer> set) {
-		Random r = new Random();
-		return set.get(r.nextInt(set.size()));
+	private long pickAtRandom(List<Long> set) {
+		return set.get(SharedInfo.random.nextInt(set.size()));
 	}
 	
 	private int setCountdown() {
-		Random r = new Random();
-		return (int) r.nextGaussian()*SharedInfo.oracleVariance + SharedInfo.oracleMean;
+		return (int) SharedInfo.random.nextGaussian()*SharedInfo.oracleVariance + SharedInfo.oracleMean;
 	}
 
 }
