@@ -1,9 +1,11 @@
 import java.util.ArrayList;
 
 import peersim.cdsim.CDProtocol;
+import peersim.config.FastConfig;
 import peersim.core.Linkable;
 import peersim.core.Node;
 import peersim.edsim.EDProtocol;
+import peersim.transport.Transport;
 import peersim.vector.SingleValueHolder;
 
 public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtocol, Linkable {
@@ -19,21 +21,26 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 
 
 	@Override
-	public void nextCycle(Node node, int protocolID) {
+	public void nextCycle(Node node, int pid) {
 		
 		int val = (int) (SharedInfo.random.nextFloat()*100);
 		if (val < SharedInfo.transGenerationThreshold)
-			broadcastNewTransaction();
+			broadcastNewTransaction(node, pid);
 		
 	}
 	
-	private void broadcastNewTransaction() {
+	private void broadcastNewTransaction(Node node, int pid) {
+		long nodeID = node.getID();
 		
 		// Pick a random amount of bitcoins (from UTXO) > 0
-		
 		// Create a transaction ( choose a dest node at random )
+		Transaction t = localBlockchain.buildTransaction(nodeID);
+	
+		// update your UTXO (use receivedTransaction)
+		localBlockchain.receiveTransaction(t);
 		
 		// Broadcast the block
+		broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.TRANSACTION, t));
 	}
 
 	@Override
@@ -43,19 +50,19 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 	
 		switch(nodeType) {
 		case SharedInfo.NORMAL:
-			normalHandle(msg);
+			normalHandle(node, pid, msg);
 			break;
 		case SharedInfo.CPU_MINER:
-			minerHandle(msg);
+			minerHandle(node, pid, msg);
 			break;
 		case SharedInfo.GPU_MINER:
-			minerHandle(msg);
+			minerHandle(node, pid, msg);
 			break;
 		case SharedInfo.FPGA_MINER:
-			minerHandle(msg);
+			minerHandle(node, pid, msg);
 			break;
 		case SharedInfo.ASIC_MINER:
-			minerHandle(msg);
+			minerHandle(node, pid, msg);
 			break;
 		default:
 			System.err.println("Invalid node type in TinyCoinMessage, fix your program");
@@ -71,31 +78,54 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		************/
 	}
 
-	private void minerHandle(TinyCoinMessage msg) {
-		// If it is MINED message AND not received yet
+	private void minerHandle(Node node, int pid, TinyCoinMessage msg) {
+		long nodeID = node.getID();
 		
-			// Pick rand no of "free" trans (not in prev blocks) up to a Max number
+		// If it is MINED message
+		if(msg.type == TinyCoinMessage.MINED) {
 		
-			// Build a block 
-		
-			// Compute algo di ricezione blocco
-		
-			// Broadcast
-		
-		// Else
-		// normal handle
+			// Pick the first trans in the mem pool up to a Max number
+			Block block = localBlockchain.buildBlock(nodeID); // pass the minerID
+			
+			if (block != null) { // There were transactions to mine
+				// Compute algo di ricezione blocco
+				localBlockchain.addBlock(block);
+				
+				// Broadcast the block
+				broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, block));
+			}
+		} else {
+			normalHandle(node, pid, msg);
+		}
 	}
 
-	private void normalHandle(TinyCoinMessage msg) {
-		// If it is a Transaction, broadcast AND not received yet
+	private void normalHandle(Node node, int pid, TinyCoinMessage msg) {
 		
+		// If it is a Transaction, broadcast AND not received yet 
+		// (receivedTransaction returns false if it must be discarded)
+		if(msg.type == TinyCoinMessage.TRANSACTION && localBlockchain.receiveTransaction((Transaction) msg.message))
+			broadcastMessage(node, pid, msg);
+
 		// If it is a Block, append it to the blockchain (execute algorithm) AND not received yet
-		// (Notice: if its father has not been received, keep it in a local cache)
+		// (Notice: if its father has not been received, keep it in a local cache) TODO TO BE IMPLEMENTED
+		else if (msg.type == TinyCoinMessage.BLOCK && addBlock((Block)msg.message))
+			broadcastMessage(node, pid, msg);
 		
 	}
 
-	public void addBlock(Block genesisBlock) {
-		localBlockchain.addBlock(genesisBlock);	
+	private void broadcastMessage(Node node, int pid, TinyCoinMessage msg) {
+		
+		Transport tr = (Transport) node.getProtocol(FastConfig.getTransport(pid));
+				
+		for (Node n: neighbours) {
+			tr.send(node, n, msg, pid);
+		}
+		
+	}
+
+
+	public boolean addBlock(Block genesisBlock) {
+		return localBlockchain.addBlock(genesisBlock);	
 	}
 
 	/**

@@ -17,10 +17,8 @@ public class SharedInfo {
     
     // Since Peersim is sequential (no concurrency) I can use this to be sure that the id is unique
     public static long latestBlockID = 0;     
-    public static long transactionID = 0;     
-	
-    
-    
+    public static long transactionID = 0;
+	    
     public static final Random random   = new Random(Configuration.getLong("random.seed"));
     
     public static final int NORMAL      = 0,
@@ -30,6 +28,7 @@ public class SharedInfo {
     						ASIC_MINER  = 4;
     
     public static final int blockReward = Configuration.getInt("BLOCK_REWARD"),
+    						maxTransPerBlock = Configuration.getInt("MAX_TRANS_PER_BLOCK"),
      						addLatencyPerTransaction = Configuration.getInt("EXTRA_LATENCY_PER_TRANS"),
      						addRewardPerTransaction = Configuration.getInt("EXTRA_REWARD_PER_TRANS"),
      						transGenerationThreshold = Configuration.getInt("PROB_GENERATE_TRANS");
@@ -52,7 +51,7 @@ public class SharedInfo {
 			fpgaPower = Configuration.getInt("PROB_FPGA_POWER"),
 			asicPower = Configuration.getInt("PROB_ASIC_POWER");
  
-    public static final int initialAmount = Configuration.getInt("INITIAL_BITCOINS");
+    public static final int maxInitialAmount = Configuration.getInt("MAX_INITIAL_BITCOINS");
     
     //----------------------------------------------------------------------------------//
     

@@ -22,8 +22,8 @@ public class TinyCoinInitialiser implements NodeInitializer, Control {
 		genesisBlock = new Block(-1, -1); // minerID, prevBlockID
 		
 		for(int i = 0; i < Network.size(); i++) { // for each node
-			genesisBlock.confirmed = true;
-			genesisBlock.addTransaction(SharedInfo.getNextTransactionID(), SharedInfo.initialAmount, -1, i);
+			boolean confirmed = true;
+			genesisBlock.addTransaction(SharedInfo.getNextTransactionID(), SharedInfo.random.nextInt(SharedInfo.maxInitialAmount), -1, i, confirmed);
 		}
 		
 	}
@@ -41,6 +41,8 @@ public class TinyCoinInitialiser implements NodeInitializer, Control {
 		
 		// add the GENESIS block to the local blockchain!
 		tinyProtocol.addBlock(genesisBlock);
+		
+		
 		
 		if (normal_or_miner < SharedInfo.normal) {
 			sI.normals.add(nodeID);

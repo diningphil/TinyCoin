@@ -2,14 +2,13 @@ import java.util.HashMap;
 
 public class Block {
 	
-	public Block(long minerID, long prevID) {
+	public Block(int minerID, long prevID) {
 		this.minerID = minerID;
 		prevBlockID = prevID;
 		blockID = SharedInfo.getNextBlockID();
-		reward = SharedInfo.blockReward;
 		extraReward = 0;
-		extraLatency = 0;
-		confirmed = false;
+		extraLatency = 0;	
+		
 		//inputTransactions = new HashMap<>();
 		//outputTransactions = new HashMap<>();	
 		transactions = new HashMap<>();	
@@ -18,17 +17,14 @@ public class Block {
 	}
 	
 	public long blockID, prevBlockID;
-	public long minerID;
-	public int reward, extraReward, extraLatency;
+	public int minerID;
+	public int extraReward, extraLatency;
 	public int height;
 	
 	//public HashMap<Long,Transaction> inputTransactions;
 	//public HashMap<Long,Transaction> outputTransactions;
 	public HashMap<Long,Transaction> transactions;
-	
-	public boolean confirmed;
-	
-	public void addTransaction(long transactionID, int amount, long src, long dest) {
+	public void addTransaction(long transactionID, int amount, int src, int dest, boolean confirmed) {
 		
 		// This would better resembles the actual implementation, but there are problems
 		// When checking if an input transaction exists ( because of assumptions of single input/output)
@@ -38,6 +34,7 @@ public class Block {
 		//outputTransactions.put(transactionID, output);
 				
 		Transaction t = new Transaction(transactionID, amount, src, dest);
+		t.confirmed = confirmed;
 		transactions.put(transactionID, t);
 		
 		extraReward += SharedInfo.addRewardPerTransaction;
