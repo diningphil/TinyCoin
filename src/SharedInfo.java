@@ -14,26 +14,46 @@ import peersim.core.Node;
 public class SharedInfo {
     private static SharedInfo instance = null;
 
+    
+    // Since Peersim is sequential (no concurrency) I can use this to be sure that the id is unique
+    public static long latestBlockID = 0;     
+    public static long transactionID = 0;     
+	
+    
+    
     public static final Random random   = new Random(Configuration.getLong("random.seed"));
     
-    public static final int NORMAL      = 0;
-    public static final int CPU_MINER   = 1;
-    public static final int GPU_MINER   = 2;
-    public static final int FPGA_MINER  = 3;
-    public static final int ASIC_MINER  = 4;
+    public static final int NORMAL      = 0,
+    						CPU_MINER   = 1,
+    						GPU_MINER   = 2,
+    						FPGA_MINER  = 3,
+    						ASIC_MINER  = 4;
     
-    public static final int blockReward = 10;
-    public static final int addLatencyPerTransaction = 1;
-    public static final int addRewardPerTransaction = 1;
+    public static final int blockReward = Configuration.getInt("BLOCK_REWARD"),
+     						addLatencyPerTransaction = Configuration.getInt("EXTRA_LATENCY_PER_TRANS"),
+     						addRewardPerTransaction = Configuration.getInt("EXTRA_REWARD_PER_TRANS"),
+     						transGenerationThreshold = Configuration.getInt("PROB_GENERATE_TRANS");
+
     
     // Gaussian distribution for the oracle
-    public static final int oracleMean = 5, oracleVariance = 3;
+    public static final int oracleMean = Configuration.getInt("ORACLE_MEAN"), 
+    		                oracleVariance = Configuration.getInt("ORACLE_VARIANCE");
+    
     // Probability to CREATE one type of miner or normal node
-    public static final int normal = 75;
-    public static final int cpu = 25, gpu = 50, fpga = 75, asic = 100;     
+    public static final int normal = Configuration.getInt("PROB_NORMAL"),
+    						cpu = Configuration.getInt("PROB_CPU"),
+    						gpu = Configuration.getInt("PROB_GPU"),
+    						fpga = Configuration.getInt("PROB_FPGA"),
+    						asic = Configuration.getInt("PROB_ASIC");
+    
     // Probability to CHOOSE one type of miner
-    public static final int cpuPower = 5, gpuPower = 15, fpgaPower = 45, asicPower = 100;
+    public static final int cpuPower = Configuration.getInt("PROB_CPU_POWER"),
+			gpuPower = Configuration.getInt("PROB_GPU_POWER"),
+			fpgaPower = Configuration.getInt("PROB_FPGA_POWER"),
+			asicPower = Configuration.getInt("PROB_ASIC_POWER");
  
+    public static final int initialAmount = Configuration.getInt("INITIAL_BITCOINS");
+    
     //----------------------------------------------------------------------------------//
     
     // NOTE: it works because the network is kept static!!
@@ -56,7 +76,10 @@ public class SharedInfo {
     	asics  = new ArrayList<Long>();
     }
 
-    public static synchronized SharedInfo getSharedInfo() {
+    public static long getNextBlockID () { return latestBlockID++; } 
+    public static long getNextTransactionID () { return transactionID++; } 
+    
+    public static /*synchronized*/ SharedInfo getSharedInfo() {
         if (instance == null) {
             instance = new SharedInfo();
         }
