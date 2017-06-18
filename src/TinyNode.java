@@ -17,9 +17,21 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 
 	public TinyNode(String prefix) { 
 		super(prefix);
-		localBlockchain = new CachedBlockchain();
 	}
 
+	/**
+	 * This is the default mechanism of peersim to create 
+	 * copies of the objects. To generate a new average protocol,
+	 * peersim will call this clone method.
+	 */
+	public Object clone() // Questo metodo è più importante di una brillante carriera in CS...
+	{
+		TinyNode af = null;
+		af = (TinyNode) super.clone();
+		af.neighbours = new ArrayList<Node>();
+		af.localBlockchain = new CachedBlockchain(); 
+		return af;
+	}
 
 	@Override
 	public void nextCycle(Node node, int pid) {	
@@ -91,17 +103,13 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		
 		// If it is MINED message
 		if(msg.type == TinyCoinMessage.MINED) {
-			System.out.println("Node " + node.getID() + " received MINED at time " + CommonState.getTime());
+			//System.out.println("Node " + node.getID() + " received MINED at time " + CommonState.getTime());
 			
-			// Pick the first trans in the mem pool up to a Max number
-			Block block = localBlockchain.buildBlock(nodeID); // pass the minerID
-			
-			if (block != null) { // There were transactions to mine
-				// Compute algo di ricezione blocco
-				localBlockchain.addBlock(block);
-				
+			Block block = localBlockchain.mineBlock(nodeID);
+		
+			if (block != null) { // There were transactions to mine	
 				// Broadcast the block
-				System.out.println("Broadcasting block " + block.blockID);
+				//System.out.println("Broadcasting block " + block.blockID);
 				broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, block, node.getID()));
 			}
 		} else {
@@ -113,17 +121,24 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		
 		// If it is a Transaction, broadcast AND not received yet 
 		// (receivedTransaction returns false if it must be discarded)
-		if(msg.type == TinyCoinMessage.TRANSACTION && localBlockchain.receiveTransaction((Transaction) msg.message)) {
-			//System.out.println("Node " + node.getID() + " received TRANSACTION at time " + CommonState.getTime() + " from " + msg.sender);
+
+		
+		if(msg.type == TinyCoinMessage.TRANSACTION) {
+			Transaction t = (Transaction) msg.message;
 			
-			broadcastMessage(node, pid, msg);
+			//System.err.println("Node " + node.getID() + " received TRANSACTION " + t.transID + "at time " + CommonState.getTime() + " from " + msg.sender);
+			
+			if(localBlockchain.receiveTransaction(t))
+				broadcastMessage(node, pid, msg);
 		}
 		// If it is a Block, append it to the blockchain (execute algorithm) AND not received yet
 		// (Notice: if its father has not been received, keep it in a local cache) TODO TO BE IMPLEMENTED
-		else if (msg.type == TinyCoinMessage.BLOCK && addBlock((Block)msg.message)) {
-			System.out.println("Node " + node.getID() + " received BLOCK at time " + CommonState.getTime());
+		else if (msg.type == TinyCoinMessage.BLOCK) {
 			
-			broadcastMessage(node, pid, msg);
+			if(addBlock((Block)msg.message)) {
+				//System.out.println("Node " + node.getID() + " received BLOCK at time " + CommonState.getTime());
+				broadcastMessage(node, pid, msg);
+			}
 		}
 		
 	}
@@ -143,18 +158,6 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		return localBlockchain.addBlock(genesisBlock);	
 	}
 
-	/**
-	 * This is the default mechanism of peersim to create 
-	 * copies of the objects. To generate a new average protocol,
-	 * peersim will call this clone method.
-	 */
-	public Object clone()
-	{
-		TinyNode af = null;
-		af = (TinyNode) super.clone();
-		af.neighbours = new ArrayList<Node>();
-		return af;
-	}
 
 	/** ---- OVERRIDE from Linkable
 	 * Basic management of the neighbours.

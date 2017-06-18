@@ -14,18 +14,8 @@ public class TinyCoinInitialiser implements NodeInitializer, Control {
 	private static final String PAR_PROT = "protocol";
 	int pid = 0;
 	
-	private Block genesisBlock; 
-	
 	public TinyCoinInitialiser(String prefix) {
-		pid = Configuration.getPid(prefix + "." + PAR_PROT);
-		
-		genesisBlock = new Block(-1, -1); // minerID, prevBlockID
-		genesisBlock.confirmed = true;
-		
-		for(int i = 0; i < Network.size(); i++) { // for each node
-			genesisBlock.addTransaction(SharedInfo.getNextTransactionID(), SharedInfo.random.nextInt(SharedInfo.maxInitialAmount), -1, i);
-		}
-		
+		pid = Configuration.getPid(prefix + "." + PAR_PROT);	
 	}
 	
 	@Override
@@ -37,12 +27,6 @@ public class TinyCoinInitialiser implements NodeInitializer, Control {
 		SharedInfo sI = SharedInfo.getSharedInfo();
 	
 		sI.idToNode.put(nodeID, node);
-		
-		
-		// add the GENESIS block to the local blockchain!
-		tinyProtocol.addBlock(genesisBlock);
-		
-		
 		
 		if (normal_or_miner < SharedInfo.normal) {
 			sI.normals.add(nodeID);

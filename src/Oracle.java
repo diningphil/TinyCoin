@@ -7,9 +7,18 @@ public class Oracle implements Control{
 
 	private static final String PAR_PROT = "protocol";
 	private int pid;
-
+	private Block genesisBlock; 
+	
 	public Oracle(String prefix) {
 		pid = Configuration.getPid(prefix + "." + PAR_PROT);
+			
+		genesisBlock = new Block(-1, -1); // minerID, prevBlockID
+		genesisBlock.confirmed = true;
+		
+		for(int i = 0; i < Network.size(); i++) { // for each node
+			genesisBlock.addTransaction(SharedInfo.getNextTransactionID(), SharedInfo.random.nextInt(SharedInfo.maxInitialAmount), -1, i);
+		}
+	
 	}
 	
 	private static int sendCountdown = -1;
@@ -22,6 +31,17 @@ public class Oracle implements Control{
 	 */
 	@Override
 	public boolean execute() {
+		
+		if(CommonState.getTime() == 0) { // GENESIS
+			SharedInfo sI = SharedInfo.getSharedInfo();
+			TinyCoinMessage message = new TinyCoinMessage(TinyCoinMessage.BLOCK, genesisBlock, -1);
+			long delay = 0;
+			for(long i = 0; i < Network.size(); i++) {
+				Node dest = sI.idToNode.get(i);
+				EDSimulator.add(delay, message, dest, pid); // 0 DELAY HERE
+			}
+		}
+			
 		
 		if (sendCountdown == -1)
 			sendCountdown = setCountdown();

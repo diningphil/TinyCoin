@@ -1,7 +1,9 @@
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import peersim.core.CommonState;
 import peersim.core.Network;
 
 public class CachedBlockchain {
@@ -20,17 +22,27 @@ public class CachedBlockchain {
 	
 	private Block head;
 	
+	// TODO I should keep just the UTXO (but I would need output transactions, not just bitcoins)
 	private HashMap<Long, Block> blockchain;
 	private ArrayList<Integer> UTXO; // bitcoin address --> amount of bitcoins
+	
+	
 	private HashMap<Long, Transaction> memPoolOfTransactions;
+	private ArrayList<Long> orderedTransactionsInPool; // FIFO QUEUE
 
+	private void zeroUTXO(){
+		for(int i = 0; i < Network.size(); i++)
+			UTXO.set(i, 0);;
+	}
+	
 	public CachedBlockchain() {
 		blockchain = new HashMap<>();
 		UTXO = new ArrayList<>(Network.size());
 			for(int i = 0; i < Network.size(); i++)
 				UTXO.add(i, 0);;
-		
+	
 		memPoolOfTransactions = new HashMap<>();
+		orderedTransactionsInPool = new ArrayList<>();
 	}
 
 	public Transaction buildTransaction(long nodeID) {
@@ -45,54 +57,116 @@ public class CachedBlockchain {
 		int destNode = SharedInfo.random.nextInt(Network.size());
 
 		// TODO: DANGEROUS CAST TO INT! SORT THINGS OUT!
-		return new Transaction(SharedInfo.getNextTransactionID(), transBTCs, (int) nodeID, destNode);
-		
+		Transaction newTrans = new Transaction(SharedInfo.getNextTransactionID(), transBTCs, (int) nodeID, destNode);
+
+		return newTrans;
 	}
 	
-	public Block buildBlock(long nodeID) {
+	public Block mineBlock(long nodeID) {
+		
+		// Assumption: after buildBlock addBlock is called
+		Block block = buildBlock(nodeID); // pass the minerID
+		
+		if(block != null) {
+			// Compute algo di ricezione blocco
+			addBlock(block);
+			
+			return block;
+		}
+		return null;
+	}
 	
-		int counter = 0;
-		ArrayList<Long> keys = new ArrayList<>(memPoolOfTransactions.keySet());
+	private Block buildBlock(long nodeID) {
+		
+		/*
+		quello che non capisco è: se ho potuto costruire un blocco significa che io ho potuto 
+		accettare le transazioni. Quindi devo assicurarmi solamente che il blocco sia valido nel
+		caso venga appeso alla blockchain. a quel punto son sicuro che le transazioni che ci 
+		metto non sono a caso! Possibile che l'ordine di ricezione non vada bene? Va bene per me,
+		ma non per gli altri in principio! Quindi devo basarmi sulla blockchain. lo stato può divergere localmente
+		ma la blockchain alla fine sarà la stessa con alta probabilità.
+		*/
+		// IMPORTANT: I KNOW THAT THE BLOCK WILL BE ADDED LATER: IT'S MY ASSUMPTION! THIS METHOD
+		// SHOULD BE PRIVATE!!
+		
 		
 		// TODO: DANGEROUS CAST TO INT! SORT THINGS OUT!
 		Block b = new Block((int) nodeID, head.blockID);
 	
-		while(counter < memPoolOfTransactions.size() && counter < SharedInfo.maxTransPerBlock) {
-			// Remove transactions at random (best would be the oldest)
-			int index = SharedInfo.random.nextInt(keys.size());
-			Transaction t = memPoolOfTransactions.get(keys.get(index));
-			keys.remove(index);			
-			b.addTransaction(t.transID, t.bitcoins, t.srcAddress, t.destAddress);
+		computeUTXO(head); 
+		
+		int size = orderedTransactionsInPool.size();
+
+		int i = 0;
+		for(i = 0; i < orderedTransactionsInPool.size() && i < SharedInfo.maxTransPerBlock; i++) {
+			// No overhead due to left shifting of the array
+			Transaction t = memPoolOfTransactions.get(orderedTransactionsInPool.remove(size-1));
 			
-			counter++;
+			if(iCanSpendMoney(t)) {
+				b.addTransaction(t.transID, t.bitcoins, t.srcAddress, t.destAddress);			
+				// Modify the temporary UTXO (needed for creation of the block)
+				int srcAmount = UTXO.get(t.srcAddress);
+				UTXO.set(t.srcAddress, srcAmount - t.bitcoins);
+				int destAmount = UTXO.get(t.destAddress);
+				UTXO.set(t.destAddress, destAmount + t.bitcoins);
+			}
+			
+			size--;
 		}
 		
-		if (counter > 0) return b;
+		if (i > 0) return b;
 		
 		return null;
 	}
 	
 	public boolean addBlock(Block block) {
 		
-		if(block.prevBlockID == -1 && head == null) { // Check if I'm adding the genesis block
+		/*
+		Inoltre può accadere che per alcuni il blocco contenga transazioni non conosciute
+		Si potrebbero incorporare le transazioni non conosciute? Potrebbe non funzionare lo stesso.
+				
+		In sostanza, come mi assicuro che il blocco verrà accettato "eventually"?
+		Ho bisogno che la blockchain sia consistente.
+		
+		Possibile soluzione: quando creo il blocco, mi assicuro che sia consistente con la blockchain locale!
+		E gestisco il fatto della Q&A.
+		*/
+		
+		if(blockchain.containsKey(block.blockID)) 
+			return false; // already present
+	
+		
+		if(block.prevBlockID == -1 && head == null) { // Check if I'm adding the genesis block			
+		// Executed just 1 time
 			
 			head = block;
 			
 			blockchain.put(block.blockID, block);
 			
 			computeUTXO(head);
-			cleanMemoryPool(head);
 			
 		} else if(blockchain.containsKey(block.prevBlockID)) {
-								
-			block.height = blockchain.get(block.prevBlockID).height + 1;	
-			blockchain.put(block.blockID, block);
-				
-			if(block.height > head.height) {
-				head = block;
-			}
+
+			if(isBlockValid(block)) { // recomputes and already updates the UTXO
 			
-			computeUTXO(head);
+				block.height = blockchain.get(block.prevBlockID).height + 1;
+				block.confirmed = false; // Not necessary, given prj assumptions
+				blockchain.put(block.blockID, block);
+				
+				if(block.height > head.height) {
+					head = block;
+				}
+				System.out.println("Time " + CommonState.getTime());
+				System.out.println(blockchainToJSON());
+			}else { // revert updates made by isBlockValid, using transactions in block
+				for (Transaction t: block.transactions.values()) {
+					// NOTE: REVERTED SIGN!
+					int srcAmount = UTXO.get(t.srcAddress);
+					UTXO.set(t.srcAddress, srcAmount + t.bitcoins); // + instead of -
+					int destAmount = UTXO.get(t.destAddress);
+					UTXO.set(t.destAddress, destAmount - t.bitcoins); // - instead of +
+				}
+			}			
 			cleanMemoryPool(head);
 	
 		} else {
@@ -103,41 +177,58 @@ public class CachedBlockchain {
 		return true;
 	}
 	
+	private boolean isBlockValid(Block block) {
+		
+		computeUTXO(head); 
+		
+		for (Transaction t: block.transactions.values()) {
+			if(iCanSpendMoney(t)) {
+				// Modify the temporary UTXO (needed for creation of the block)
+				int srcAmount = UTXO.get(t.srcAddress);
+				UTXO.set(t.srcAddress, srcAmount - t.bitcoins);
+				int destAmount = UTXO.get(t.destAddress);
+				UTXO.set(t.destAddress, destAmount + t.bitcoins);
+			}else 
+				return false;
+		}
+		return true;
+	}
+
 	public void computeUTXO(Block start) { // go backwards till the genesis block (do not worry about forks)	
 		boolean genesisBlockFound = false;
 		
 		Block tmpBlock = start;
 		int sixConfirmRule = 0;
 		
-		//il problema è che finche un blocco non viene accettato i bitcoin non si modificano! non posso usare roba a caso
+		zeroUTXO();
 		
 		do {
 			if(tmpBlock.prevBlockID == -1) genesisBlockFound = true;
 			
-			if(sixConfirmRule >= 6) {
-				// Confirm the block and assign rewards and bitcoins to those who performed a transaction
+			if(sixConfirmRule >= 6 || tmpBlock.confirmed == true) {
+				// Confirm the block (for no particular reasons :) )
 				tmpBlock.confirmed = true;
-				
-				Iterator<Long> it = tmpBlock.transactions.keySet().iterator();
-				while(it.hasNext()) {
-					Transaction t = tmpBlock.transactions.get(it.next());
-					
-					if(!genesisBlockFound) {
-						int srcAmount = UTXO.get(t.srcAddress);
-						UTXO.set(t.srcAddress, srcAmount - t.bitcoins);
-					}
-					
-					int destAmount = UTXO.get(t.destAddress);
-					UTXO.set(t.destAddress, destAmount + t.bitcoins);
+			}
+			sixConfirmRule++;
+			
+			Iterator<Long> it = tmpBlock.transactions.keySet().iterator();
+			while(it.hasNext()) {
+				long nextTransID = it.next();
+				Transaction t = tmpBlock.transactions.get(nextTransID);
+								
+				if(!genesisBlockFound) {
+					int srcAmount = UTXO.get(t.srcAddress);
+					UTXO.set(t.srcAddress, srcAmount - t.bitcoins);
 				}
 				
-				// Assign reward to the miner if I'm not on the genesis block
-				if(!genesisBlockFound)
-					UTXO.set(tmpBlock.minerID, UTXO.get(tmpBlock.minerID) + SharedInfo.blockReward + tmpBlock.extraReward);
-			} else
-				assert tmpBlock.confirmed == false;
+				int destAmount = UTXO.get(t.destAddress);
+				UTXO.set(t.destAddress, destAmount + t.bitcoins);
+			}
 			
-			sixConfirmRule++;
+			// Assign reward to the miner if I'm not on the genesis block
+			if(!genesisBlockFound)
+				UTXO.set(tmpBlock.minerID, UTXO.get(tmpBlock.minerID) + SharedInfo.blockReward + tmpBlock.extraReward);
+					
 			
 			// Assign the parent of the current block to tmpBlock
 			if(blockchain.containsKey(tmpBlock.prevBlockID))
@@ -145,28 +236,27 @@ public class CachedBlockchain {
 			
 		} while(!genesisBlockFound);
 		
-		/** CHECK THAT ALL NODES HAVE AN AMOUNT OF BITCOIN >= 0, otherwise you have done smth wrong */
+		/** DEBUG: CHECK THAT ALL NODES HAVE AN AMOUNT OF BITCOIN >= 0, otherwise you have done smth wrong */
 		for(int i = 0; i < UTXO.size(); i++) {
-			if(UTXO.get(i) < 0) System.err.println("UTXO BROKEN! value = " + UTXO.get(i) + " for node " + i);
-			
-			/** DEBUG */
-			  if(head.height == 2) {
-			 		System.out.println(blockchainToJSON());
-			 		System.exit(0);
-			   }
-			 /**/
-		}
-		
+			if(UTXO.get(i) < 0) {
+				System.err.println("UTXO BROKEN! value = " + UTXO.get(i) + " for node " + i + " time " + CommonState.getTime());	
+				// DEBUG 	
+				System.out.println(blockchainToJSON());
+			 	System.exit(0);
+			}
+		}				
 	}
 
 	private void cleanMemoryPool(Block block) {
-		Iterator<Long> it = block.transactions.keySet().iterator();
-		while(it.hasNext()) {
-			memPoolOfTransactions.remove(it.next());
-		}
+//		Iterator<Long> it = block.transactions.keySet().iterator();
+//		while(it.hasNext()) {
+		memPoolOfTransactions.clear();
+		orderedTransactionsInPool.clear();
+	//	}
 	}
 	
 	public boolean receiveTransaction(Transaction t) {
+	
 		// Algorithm taken from slide "Receiving a transaction"
 		/** there is only one input
 		for each input (h, i) in t do
@@ -183,10 +273,26 @@ public class CachedBlockchain {
 			end if
 		end for
 		*/
-		int ownedAmount = UTXO.get(t.srcAddress); 
-		if (ownedAmount < t.bitcoins) {
+
+		// TODO STOP BROADCASTING. Se non c'è nel memory pool possono essere successe 2 cose:
+		// o ho minato un blocco (che però potrebbe non essere stato confermato)
+		// oppure non l'ho ricevuta
+		// Se io la togliessi solo quando viene confermato il blocco, allora sarei sicuro. Però
+		// se io all'istante t devo minare un blocco e la seleziono, e nello stesso istante ricevo un blocco e lei viene confermata,
+		// allora rischio (non avendo output(h,i) di fare confusione e far spendere 2 volte la stessa 
+		// quantità all'utente. Nel caso la transazione arrivi dopo che ho minato 6 blocchi (impossibile) a quel punto sarebbe un altro problema
+		// visto che nel progetto il nodo sceglie i nodi quando gli viene chiesto di minare,
+		// a parte il caso limite non potrà scegliere mai una transazione confermata!
+		
+		if(memPoolOfTransactions.containsKey(t.transID)) {
+			return false;
+		}
+		
+		
+		if(!iCanSpendMoney(t)) {
 			// It may be possible that I have not received other transactions that make the amount of bitcoins owned by an account increase!
-			//System.out.println(t.srcAddress + " does not have enough money in my local state! "+ownedAmount + " vs " + t.bitcoins + ". Discarding"); return false; // discard
+			//System.out.println(t.srcAddress + " does not have enough money in my local state! "+ t.bitcoins + " required. Discarding");
+			return false;
 		}
 		
 		/** This check is unnecessary, only one input, one output with same bitcoin value
@@ -203,13 +309,19 @@ public class CachedBlockchain {
 		
 		// Append t to local memory pool	
 		memPoolOfTransactions.put(t.transID, t);
-				
-		// todo in protocol:
-		// Forward t to neighbors in the Bitcoin network
+		orderedTransactionsInPool.add(t.transID);
 		
 		return true;
 	}
 	
+	private boolean iCanSpendMoney(Transaction t) {
+		int ownedAmount = UTXO.get(t.srcAddress); 
+		if (ownedAmount < t.bitcoins) {
+			return false; // discard
+		}
+		return true;
+	}
+
 	private String blockchainToJSON() {
 		String res = "{ blockchain: [";
 		Block curr = null;
@@ -232,4 +344,5 @@ public class CachedBlockchain {
 		res += "]}";
 		return res;
 	}
+
 }
