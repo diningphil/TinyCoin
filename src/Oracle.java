@@ -64,7 +64,7 @@ public class Oracle implements Control{
 		//System.out.println("Sending \"mined\" msg through protocol " + Configuration.lookupPid(pid) + " to node " + chosenNode);
 		//System.out.println("Which is a " + sI.miners.get(chosenNode));
 		
-		TinyCoinMessage message = new TinyCoinMessage(TinyCoinMessage.MINED, 0);
+		TinyCoinMessage message = new TinyCoinMessage(TinyCoinMessage.MINED, 0, -1);
 		long delay = 0;
 		Node dest = sI.idToNode.get(chosenNode);
 

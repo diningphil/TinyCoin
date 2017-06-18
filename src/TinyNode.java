@@ -41,7 +41,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 			localBlockchain.receiveTransaction(t);
 			
 			// Broadcast the block
-			broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.TRANSACTION, t));			
+			broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.TRANSACTION, t, node.getID()));			
 		}
 //		else {
 //			System.out.println("Node " + nodeID + " has 0 bitcoins");
@@ -102,7 +102,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 				
 				// Broadcast the block
 				System.out.println("Broadcasting block " + block.blockID);
-				broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, block));
+				broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, block, node.getID()));
 			}
 		} else {
 			normalHandle(node, pid, msg);
@@ -114,7 +114,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		// If it is a Transaction, broadcast AND not received yet 
 		// (receivedTransaction returns false if it must be discarded)
 		if(msg.type == TinyCoinMessage.TRANSACTION && localBlockchain.receiveTransaction((Transaction) msg.message)) {
-			System.out.println("Node " + node.getID() + " received TRANSACTION at time " + CommonState.getTime());
+			//System.out.println("Node " + node.getID() + " received TRANSACTION at time " + CommonState.getTime() + " from " + msg.sender);
 			
 			broadcastMessage(node, pid, msg);
 		}
@@ -131,9 +131,8 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 	private void broadcastMessage(Node node, int pid, TinyCoinMessage msg) {
 		
 		Transport tr = (Transport) node.getProtocol(FastConfig.getTransport(pid));
-				
-		System.err.println("Devo inviare, ho " + neighbours.size() + " vicini!");
-		for (Node n: neighbours) {
+
+		for (Node n: neighbours) { // TODO With WireKOut I have a fixed number of neighbours. Better insert a DROP prob
 			tr.send(node, n, msg, pid);
 		}
 		

@@ -20,10 +20,10 @@ public class TinyCoinInitialiser implements NodeInitializer, Control {
 		pid = Configuration.getPid(prefix + "." + PAR_PROT);
 		
 		genesisBlock = new Block(-1, -1); // minerID, prevBlockID
+		genesisBlock.confirmed = true;
 		
 		for(int i = 0; i < Network.size(); i++) { // for each node
-			boolean confirmed = true;
-			genesisBlock.addTransaction(SharedInfo.getNextTransactionID(), SharedInfo.random.nextInt(SharedInfo.maxInitialAmount), -1, i, confirmed);
+			genesisBlock.addTransaction(SharedInfo.getNextTransactionID(), SharedInfo.random.nextInt(SharedInfo.maxInitialAmount), -1, i);
 		}
 		
 	}

@@ -38,7 +38,8 @@ public class CachedBlockchain {
 		// TODO: DANGEROUS CAST TO INT! SORT THINGS OUT!
 		int nodeBTCs = UTXO.get((int) nodeID);
 		
-		if (nodeBTCs == 0) return null;
+		if (nodeBTCs <= 0) // TODO Metti == 0 quando hai risolto problema
+			return null;
 		
 		int transBTCs = SharedInfo.random.nextInt(nodeBTCs) + 1; // avoid 0 BTC transactions
 		int destNode = SharedInfo.random.nextInt(Network.size());
@@ -48,11 +49,6 @@ public class CachedBlockchain {
 		
 	}
 	
-	il problema è che add block restituisce null, probabilmente perchè non ha abbastanza transazioni.
-	però allora il problema è che non ci sono i soldi, ma è strano perchè col genesis block avrei dovuto
-	aggiungere soldi almeno a qualcuno. non sta funzionando il meccanismo di genesis, quindi l'algoritmo
-	addBlock e computeUTXO
-	
 	public Block buildBlock(long nodeID) {
 	
 		int counter = 0;
@@ -60,12 +56,13 @@ public class CachedBlockchain {
 		
 		// TODO: DANGEROUS CAST TO INT! SORT THINGS OUT!
 		Block b = new Block((int) nodeID, head.blockID);
-		
+	
 		while(counter < memPoolOfTransactions.size() && counter < SharedInfo.maxTransPerBlock) {
 			// Remove transactions at random (best would be the oldest)
 			int index = SharedInfo.random.nextInt(keys.size());
-			memPoolOfTransactions.get(keys.get(index));
-			keys.remove(index);
+			Transaction t = memPoolOfTransactions.get(keys.get(index));
+			keys.remove(index);			
+			b.addTransaction(t.transID, t.bitcoins, t.srcAddress, t.destAddress);
 			
 			counter++;
 		}
@@ -77,14 +74,14 @@ public class CachedBlockchain {
 	
 	public boolean addBlock(Block block) {
 		
-		if(head == null)
+		if(block.prevBlockID == -1 && head == null) { // Check if I'm adding the genesis block
+			
 			head = block;
 			
-		if(block.prevBlockID == -1) { // Check if I'm adding the genesis block
-			
-			// head must be "block"
 			blockchain.put(block.blockID, block);
 			
+			computeUTXO(head);
+			cleanMemoryPool(head);
 			
 		} else if(blockchain.containsKey(block.prevBlockID)) {
 								
@@ -94,9 +91,9 @@ public class CachedBlockchain {
 			if(block.height > head.height) {
 				head = block;
 			}
-				
-			computeUTXO(block);
-			cleanMemoryPool(block);
+			
+			computeUTXO(head);
+			cleanMemoryPool(head);
 	
 		} else {
 			// TODO see P2P Q&A on Moodle
@@ -105,40 +102,63 @@ public class CachedBlockchain {
 		}
 		return true;
 	}
-
+	
 	public void computeUTXO(Block start) { // go backwards till the genesis block (do not worry about forks)	
-		boolean genesisFound = false;
+		boolean genesisBlockFound = false;
 		
 		Block tmpBlock = start;
+		int sixConfirmRule = 0;
+		
+		//il problema è che finche un blocco non viene accettato i bitcoin non si modificano! non posso usare roba a caso
 		
 		do {
-			if(tmpBlock.prevBlockID == -1) genesisFound = true;
+			if(tmpBlock.prevBlockID == -1) genesisBlockFound = true;
 			
-			Iterator<Long> it = tmpBlock.transactions.keySet().iterator();
-			while(it.hasNext()) {
-				Transaction t = tmpBlock.transactions.get(it.next());
-				int srcAmount = UTXO.get(t.srcAddress);
-				int destAmount = UTXO.get(t.destAddress);
-				UTXO.set(t.srcAddress, srcAmount - t.bitcoins);
-				UTXO.set(t.destAddress, destAmount + t.bitcoins);
-			}
+			if(sixConfirmRule >= 6) {
+				// Confirm the block and assign rewards and bitcoins to those who performed a transaction
+				tmpBlock.confirmed = true;
+				
+				Iterator<Long> it = tmpBlock.transactions.keySet().iterator();
+				while(it.hasNext()) {
+					Transaction t = tmpBlock.transactions.get(it.next());
+					
+					if(!genesisBlockFound) {
+						int srcAmount = UTXO.get(t.srcAddress);
+						UTXO.set(t.srcAddress, srcAmount - t.bitcoins);
+					}
+					
+					int destAmount = UTXO.get(t.destAddress);
+					UTXO.set(t.destAddress, destAmount + t.bitcoins);
+				}
+				
+				// Assign reward to the miner if I'm not on the genesis block
+				if(!genesisBlockFound)
+					UTXO.set(tmpBlock.minerID, UTXO.get(tmpBlock.minerID) + SharedInfo.blockReward + tmpBlock.extraReward);
+			} else
+				assert tmpBlock.confirmed == false;
 			
-			// Assign reward to the miner 
-			UTXO.set(tmpBlock.minerID, UTXO.get(tmpBlock.minerID) + SharedInfo.blockReward + tmpBlock.extraReward);
+			sixConfirmRule++;
 			
 			// Assign the parent of the current block to tmpBlock
 			if(blockchain.containsKey(tmpBlock.prevBlockID))
 					tmpBlock = blockchain.get(tmpBlock.prevBlockID);
 			
-		} while(!genesisFound);
+		} while(!genesisBlockFound);
 		
 		/** CHECK THAT ALL NODES HAVE AN AMOUNT OF BITCOIN >= 0, otherwise you have done smth wrong */
-		for(int i = 0; i < UTXO.size(); i++)
+		for(int i = 0; i < UTXO.size(); i++) {
 			if(UTXO.get(i) < 0) System.err.println("UTXO BROKEN! value = " + UTXO.get(i) + " for node " + i);
-		
+			
+			/** DEBUG */
+			  if(head.height == 2) {
+			 		System.out.println(blockchainToJSON());
+			 		System.exit(0);
+			   }
+			 /**/
+		}
 		
 	}
-	
+
 	private void cleanMemoryPool(Block block) {
 		Iterator<Long> it = block.transactions.keySet().iterator();
 		while(it.hasNext()) {
@@ -163,8 +183,10 @@ public class CachedBlockchain {
 			end if
 		end for
 		*/
-		if (UTXO.get(t.srcAddress) < t.bitcoins) {
-			System.err.println(t.srcAddress + " does not have enough money! Can this happen??"); return false; // discard
+		int ownedAmount = UTXO.get(t.srcAddress); 
+		if (ownedAmount < t.bitcoins) {
+			// It may be possible that I have not received other transactions that make the amount of bitcoins owned by an account increase!
+			//System.out.println(t.srcAddress + " does not have enough money in my local state! "+ownedAmount + " vs " + t.bitcoins + ". Discarding"); return false; // discard
 		}
 		
 		/** This check is unnecessary, only one input, one output with same bitcoin value
@@ -186,5 +208,28 @@ public class CachedBlockchain {
 		// Forward t to neighbors in the Bitcoin network
 		
 		return true;
+	}
+	
+	private String blockchainToJSON() {
+		String res = "{ blockchain: [";
+		Block curr = null;
+		if(head != null) {
+			do {
+				if(curr == null)
+					curr = head;
+				else
+					curr = blockchain.get(curr.prevBlockID);
+				
+				res += curr.toJSON();			
+				if(curr.prevBlockID != -1) {
+					res += ",";
+				}
+			} while(curr.prevBlockID != -1);
+			
+		} else {
+			return "";
+		}
+		res += "]}";
+		return res;
 	}
 }

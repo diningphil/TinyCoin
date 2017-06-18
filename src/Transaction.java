@@ -6,7 +6,6 @@ public class Transaction {
 	//public long address;
 	public int srcAddress;
 	public int destAddress;
-	public boolean confirmed;
 
 	
 	//public Transaction(long id, int b, long addr) {
@@ -16,6 +15,15 @@ public class Transaction {
 		//address = addr;
 		srcAddress = src;
 		destAddress = dest;
-		confirmed = false;
 	}
+	
+	public String toJSON() {
+		return "{ "
+				+ "transID:" + transID + ","
+				+ "bitcoins:" + bitcoins + ","
+				+ "srcAddress:" + srcAddress + ","
+				+ "destAddress:" + destAddress
+				+ "}";
+	}
+	
 }
