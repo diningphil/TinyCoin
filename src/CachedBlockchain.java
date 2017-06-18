@@ -38,6 +38,8 @@ public class CachedBlockchain {
 		// TODO: DANGEROUS CAST TO INT! SORT THINGS OUT!
 		int nodeBTCs = UTXO.get((int) nodeID);
 		
+		if (nodeBTCs == 0) return null;
+		
 		int transBTCs = SharedInfo.random.nextInt(nodeBTCs) + 1; // avoid 0 BTC transactions
 		int destNode = SharedInfo.random.nextInt(Network.size());
 
@@ -46,6 +48,10 @@ public class CachedBlockchain {
 		
 	}
 	
+	il problema è che add block restituisce null, probabilmente perchè non ha abbastanza transazioni.
+	però allora il problema è che non ci sono i soldi, ma è strano perchè col genesis block avrei dovuto
+	aggiungere soldi almeno a qualcuno. non sta funzionando il meccanismo di genesis, quindi l'algoritmo
+	addBlock e computeUTXO
 	
 	public Block buildBlock(long nodeID) {
 	
@@ -68,7 +74,6 @@ public class CachedBlockchain {
 		
 		return null;
 	}
-	
 	
 	public boolean addBlock(Block block) {
 		
@@ -107,7 +112,7 @@ public class CachedBlockchain {
 		Block tmpBlock = start;
 		
 		do {
-			if(tmpBlock.prevBlockID == -1) genesisFound = false;
+			if(tmpBlock.prevBlockID == -1) genesisFound = true;
 			
 			Iterator<Long> it = tmpBlock.transactions.keySet().iterator();
 			while(it.hasNext()) {
@@ -182,5 +187,4 @@ public class CachedBlockchain {
 		
 		return true;
 	}
-
 }

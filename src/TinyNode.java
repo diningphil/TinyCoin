@@ -2,6 +2,7 @@ import java.util.ArrayList;
 
 import peersim.cdsim.CDProtocol;
 import peersim.config.FastConfig;
+import peersim.core.CommonState;
 import peersim.core.Linkable;
 import peersim.core.Node;
 import peersim.edsim.EDProtocol;
@@ -21,12 +22,11 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 
 
 	@Override
-	public void nextCycle(Node node, int pid) {
-		
+	public void nextCycle(Node node, int pid) {	
 		int val = (int) (SharedInfo.random.nextFloat()*100);
-		if (val < SharedInfo.transGenerationThreshold)
+		if (val < SharedInfo.transGenerationThreshold) {
 			broadcastNewTransaction(node, pid);
-		
+		}		
 	}
 	
 	private void broadcastNewTransaction(Node node, int pid) {
@@ -36,11 +36,16 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		// Create a transaction ( choose a dest node at random )
 		Transaction t = localBlockchain.buildTransaction(nodeID);
 	
-		// update your UTXO (use receivedTransaction)
-		localBlockchain.receiveTransaction(t);
-		
-		// Broadcast the block
-		broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.TRANSACTION, t));
+		if(t != null) { // Node has > 0 BTCs
+			// update your UTXO (use receivedTransaction)
+			localBlockchain.receiveTransaction(t);
+			
+			// Broadcast the block
+			broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.TRANSACTION, t));			
+		}
+//		else {
+//			System.out.println("Node " + nodeID + " has 0 bitcoins");
+//		}
 	}
 
 	@Override
@@ -48,6 +53,9 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		
 		TinyCoinMessage msg = (TinyCoinMessage) event;
 	
+		//System.out.println("Node " + node.getID() + " received msg id: " + msg.type + " at time " + CommonState.getTime());
+		
+		
 		switch(nodeType) {
 		case SharedInfo.NORMAL:
 			normalHandle(node, pid, msg);
@@ -65,7 +73,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 			minerHandle(node, pid, msg);
 			break;
 		default:
-			System.err.println("Invalid node type in TinyCoinMessage, fix your program");
+			System.err.println("Invalid node type, fix your program");
 		}
 		/** DEBUG **
 		 * System.out.println("Node " + node.getID() + " of type " + nodeType + ": received message");
@@ -83,7 +91,8 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		
 		// If it is MINED message
 		if(msg.type == TinyCoinMessage.MINED) {
-		
+			System.out.println("Node " + node.getID() + " received MINED at time " + CommonState.getTime());
+			
 			// Pick the first trans in the mem pool up to a Max number
 			Block block = localBlockchain.buildBlock(nodeID); // pass the minerID
 			
@@ -92,6 +101,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 				localBlockchain.addBlock(block);
 				
 				// Broadcast the block
+				System.out.println("Broadcasting block " + block.blockID);
 				broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, block));
 			}
 		} else {
@@ -103,13 +113,18 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		
 		// If it is a Transaction, broadcast AND not received yet 
 		// (receivedTransaction returns false if it must be discarded)
-		if(msg.type == TinyCoinMessage.TRANSACTION && localBlockchain.receiveTransaction((Transaction) msg.message))
+		if(msg.type == TinyCoinMessage.TRANSACTION && localBlockchain.receiveTransaction((Transaction) msg.message)) {
+			System.out.println("Node " + node.getID() + " received TRANSACTION at time " + CommonState.getTime());
+			
 			broadcastMessage(node, pid, msg);
-
+		}
 		// If it is a Block, append it to the blockchain (execute algorithm) AND not received yet
 		// (Notice: if its father has not been received, keep it in a local cache) TODO TO BE IMPLEMENTED
-		else if (msg.type == TinyCoinMessage.BLOCK && addBlock((Block)msg.message))
+		else if (msg.type == TinyCoinMessage.BLOCK && addBlock((Block)msg.message)) {
+			System.out.println("Node " + node.getID() + " received BLOCK at time " + CommonState.getTime());
+			
 			broadcastMessage(node, pid, msg);
+		}
 		
 	}
 
@@ -117,6 +132,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		
 		Transport tr = (Transport) node.getProtocol(FastConfig.getTransport(pid));
 				
+		System.err.println("Devo inviare, ho " + neighbours.size() + " vicini!");
 		for (Node n: neighbours) {
 			tr.send(node, n, msg, pid);
 		}

@@ -39,26 +39,29 @@ public class Oracle implements Control{
 	
 	
 	private void sendMined() {
-		int power = (int) (SharedInfo.random.nextFloat()*100);
 		SharedInfo sI = SharedInfo.getSharedInfo();
 		
 		long chosenNode = -1;
+
+		// TODO MAY REQUIRE MUCH TIME WITH FEW NODES!!
+		while(chosenNode == -1) {
+			int power = (int) (SharedInfo.random.nextFloat()*100);
+			if (power <= SharedInfo.cpuPower)
+				// pick a cpu miner
+				chosenNode = pickAtRandom(sI.cpus);
+			else if (power <= SharedInfo.gpuPower)
+				// pick a gpu miner
+				chosenNode = pickAtRandom(sI.gpus);
+			else if (power <= SharedInfo.fpgaPower)
+				// pick a fpga miner
+				chosenNode = pickAtRandom(sI.fpgas);
+			else
+				// pick an asic miner
+				chosenNode = pickAtRandom(sI.asics);
+		}
 		
-		if (power <= SharedInfo.cpuPower)
-			// pick a cpu miner
-			chosenNode = pickAtRandom(sI.cpus);
-		else if (power <= SharedInfo.gpuPower)
-			// pick a gpu miner
-			chosenNode = pickAtRandom(sI.gpus);
-		else if (power <= SharedInfo.fpgaPower)
-			// pick a fpga miner
-			chosenNode = pickAtRandom(sI.fpgas);
-		else 
-			// pick an asic miner
-			chosenNode = pickAtRandom(sI.asics);
-			
 		// Send the message
-		System.out.println("Sending \"mined\" msg through protocol " + Configuration.lookupPid(pid) + " to node " + chosenNode);
+		//System.out.println("Sending \"mined\" msg through protocol " + Configuration.lookupPid(pid) + " to node " + chosenNode);
 		//System.out.println("Which is a " + sI.miners.get(chosenNode));
 		
 		TinyCoinMessage message = new TinyCoinMessage(TinyCoinMessage.MINED, 0);
@@ -70,6 +73,7 @@ public class Oracle implements Control{
 	}
 
 	private long pickAtRandom(List<Long> set) {
+		if(set.isEmpty()) return -1;
 		return set.get(SharedInfo.random.nextInt(set.size()));
 	}
 	
