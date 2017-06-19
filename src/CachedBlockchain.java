@@ -68,10 +68,8 @@ public class CachedBlockchain {
 		Block block = buildBlock(nodeID); // pass the minerID
 		
 		if(block != null) {
-			// Compute algo di ricezione blocco
-			addBlock(block);
-			
-			return block;
+			// Compute algo di ricezione blocco, false se non va bene
+			if(addBlock(block)) return block;			
 		}
 		return null;
 	}
@@ -144,10 +142,11 @@ public class CachedBlockchain {
 			blockchain.put(block.blockID, block);
 			
 			computeUTXO(head);
+			cleanMemoryPool(head);
 			
 		} else if(blockchain.containsKey(block.prevBlockID)) {
 
-			if(isBlockValid(block)) { // recomputes and already updates the UTXO
+			if(isBlockValid(block)) { // recomputes and already updates the UTXO. if the block is not valid, just recomputes UTXO
 			
 				block.height = blockchain.get(block.prevBlockID).height + 1;
 				block.confirmed = false; // Not necessary, given prj assumptions
@@ -156,18 +155,14 @@ public class CachedBlockchain {
 				if(block.height > head.height) {
 					head = block;
 				}
-				System.out.println("Time " + CommonState.getTime());
-				System.out.println(blockchainToJSON());
-			}else { // revert updates made by isBlockValid, using transactions in block
-				for (Transaction t: block.transactions.values()) {
-					// NOTE: REVERTED SIGN!
-					int srcAmount = UTXO.get(t.srcAddress);
-					UTXO.set(t.srcAddress, srcAmount + t.bitcoins); // + instead of -
-					int destAmount = UTXO.get(t.destAddress);
-					UTXO.set(t.destAddress, destAmount - t.bitcoins); // - instead of +
-				}
+				//System.out.println("Time " + CommonState.getTime());
+				//System.out.println(blockchainToJSON());
+				cleanMemoryPool(head);
+				
+			}else {
+				cleanMemoryPool(head);
+				return false;
 			}			
-			cleanMemoryPool(head);
 	
 		} else {
 			// TODO see P2P Q&A on Moodle
@@ -178,18 +173,34 @@ public class CachedBlockchain {
 	}
 	
 	private boolean isBlockValid(Block block) {
+		 TODO è troppo inefficiente? SI. Tieniti una copia di UTXO che non viene modificata
+		 * e che serve solo per quando aggiungi un blocco. Per controllare se è valido, puoi evitare computeUTXO.
+		 * Al più duplichi solo la struttura per quando devi ricominciare a lavorare sulle transazioni
+		 * */
 		
 		computeUTXO(head); 
 		
+		ArrayList<Transaction> accepted = new ArrayList<>();
+		
 		for (Transaction t: block.transactions.values()) {
 			if(iCanSpendMoney(t)) {
+				accepted.add(t);
 				// Modify the temporary UTXO (needed for creation of the block)
 				int srcAmount = UTXO.get(t.srcAddress);
 				UTXO.set(t.srcAddress, srcAmount - t.bitcoins);
 				int destAmount = UTXO.get(t.destAddress);
 				UTXO.set(t.destAddress, destAmount + t.bitcoins);
-			}else 
+			}else {
+				// REVERT ACCEPTED TRANSACTIONS!
+				for(Transaction t2: accepted){
+					// NOTE: REVERTED SIGN!
+					int srcAmount = UTXO.get(t2.srcAddress);
+					UTXO.set(t2.srcAddress, srcAmount + t2.bitcoins); // + instead of -
+					int destAmount = UTXO.get(t2.destAddress);
+					UTXO.set(t2.destAddress, destAmount - t2.bitcoins); // - instead of +
+				}
 				return false;
+			}
 		}
 		return true;
 	}

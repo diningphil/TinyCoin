@@ -103,7 +103,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		
 		// If it is MINED message
 		if(msg.type == TinyCoinMessage.MINED) {
-			//System.out.println("Node " + node.getID() + " received MINED at time " + CommonState.getTime());
+			System.out.println("Node " + node.getID() + " received MINED at time " + CommonState.getTime());
 			
 			Block block = localBlockchain.mineBlock(nodeID);
 		
