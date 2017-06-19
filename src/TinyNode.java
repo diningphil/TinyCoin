@@ -55,9 +55,6 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 			// Broadcast the block
 			broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.TRANSACTION, t, node.getID()));			
 		}
-//		else {
-//			System.out.println("Node " + nodeID + " has 0 bitcoins");
-//		}
 	}
 
 	@Override
@@ -65,9 +62,6 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		
 		TinyCoinMessage msg = (TinyCoinMessage) event;
 	
-		//System.out.println("Node " + node.getID() + " received msg id: " + msg.type + " at time " + CommonState.getTime());
-		
-		
 		switch(nodeType) {
 		case SharedInfo.NORMAL:
 			normalHandle(node, pid, msg);
@@ -87,15 +81,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		default:
 			System.err.println("Invalid node type, fix your program");
 		}
-		/** DEBUG **
-		 * System.out.println("Node " + node.getID() + " of type " + nodeType + ": received message");
-		System.out.println("My neighbours are:");
 
-		for(Node n: neighbours){
-			System.out.print(n.getID() + " ");
-		}
-		System.out.println();
-		************/
 	}
 
 	private void minerHandle(Node node, int pid, TinyCoinMessage msg) {
@@ -103,7 +89,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		
 		// If it is MINED message
 		if(msg.type == TinyCoinMessage.MINED) {
-			System.out.println("Node " + node.getID() + " received MINED at time " + CommonState.getTime());
+			//System.out.println("Node " + node.getID() + " received MINED at time " + CommonState.getTime());
 			
 			Block block = localBlockchain.mineBlock(nodeID);
 		
@@ -112,7 +98,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 				System.out.println("Broadcasting MINED block " + block.blockID);
 				broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, block, node.getID()));
 			} else {
-				System.out.println("NULL BLOCK");
+				System.out.println("NULL BLOCK => no transactions to mine. It may happen when I have received a block very few time ago, check if data structure is empty");
 			}
 		} else {
 			normalHandle(node, pid, msg);
@@ -134,11 +120,11 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 				broadcastMessage(node, pid, msg);
 		}
 		// If it is a Block, append it to the blockchain (execute algorithm) AND not received yet
-		// (Notice: if its father has not been received, keep it in a local cache) TODO TO BE IMPLEMENTED
+		// (Notice: if its father has not been received, keep it in a local cache)
 		else if (msg.type == TinyCoinMessage.BLOCK) {
 			
 			if(addBlock((Block)msg.message)) {
-				//System.out.println("Node " + node.getID() + " received BLOCK at time " + CommonState.getTime());
+				System.out.println("Node " + node.getID() + " received new BLOCK "+ ((Block)msg.message).blockID  +"at time " + CommonState.getTime());
 				broadcastMessage(node, pid, msg);
 			}
 		}
@@ -149,7 +135,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		
 		Transport tr = (Transport) node.getProtocol(FastConfig.getTransport(pid));
 
-		for (Node n: neighbours) { // TODO With WireKOut I have a fixed number of neighbours. Better insert a DROP prob
+		for (Node n: neighbours) {
 			tr.send(node, n, msg, pid);
 		}
 		

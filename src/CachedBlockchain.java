@@ -17,7 +17,7 @@ public class CachedBlockchain {
 	 * - update blockchain and handle forks
 	 * - confirm blocks and assign rewards
 	 * - select a group of transactions to put into a block
-	 * - discard inconsistencies (if I'm mining a block whose transactions are already in the blockchain etc.)
+	 * - discard inconsistencies
 	 */
 	
 	private Block head;
@@ -31,6 +31,10 @@ public class CachedBlockchain {
 	private HashMap<Long, Transaction> memPoolOfTransactions;
 	private ArrayList<Long> orderedTransactionsInPool; // FIFO QUEUE
 
+	
+	// What if I receive a block but not yet its predecessor? Eventually I am sure I will receive it
+	private HashMap<Long, ArrayList<Block>> waitingBlocks; // The key corresponds to the blockID that I am waiting for
+	
 	private void zeroUTXO(){
 		for(int i = 0; i < Network.size(); i++)
 			UTXO.set(i, 0);;
@@ -45,6 +49,8 @@ public class CachedBlockchain {
 		tempUTXO = (ArrayList<Integer>) UTXO.clone();
 		memPoolOfTransactions = new HashMap<>();
 		orderedTransactionsInPool = new ArrayList<>();
+		
+		waitingBlocks = new HashMap<>();
 	}
 
 	public Transaction buildTransaction(long nodeID) { // use tempUTXO since
@@ -52,7 +58,7 @@ public class CachedBlockchain {
 		// TODO: DANGEROUS CAST TO INT! SORT THINGS OUT!
 		int nodeBTCs = tempUTXO.get((int) nodeID);
 		
-		if (nodeBTCs == 0) // TODO Metti == 0 quando hai risolto problema
+		if (nodeBTCs == 0)
 			return null;
 		else if(nodeBTCs < 0) {
 			System.err.println("Bitcoins for " + nodeID + " are < 0! " + nodeBTCs);
@@ -71,7 +77,6 @@ public class CachedBlockchain {
 	
 	public Block mineBlock(long nodeID) {
 		
-		// Assumption: after buildBlock addBlock is called
 		Block block = buildBlock(nodeID); // pass the minerID
 		
 		if(block != null) {
@@ -145,7 +150,6 @@ public class CachedBlockchain {
 		if(blockchain.containsKey(block.blockID)) // I should not keep the block chain, but it is useful for debugging and for the project
 			return false; // already present
 	
-		
 		if(block.blockID == -1 && head == null) { // Check if I'm adding the genesis block			
 		// Executed just 1 time
 			
@@ -154,7 +158,7 @@ public class CachedBlockchain {
 			blockchain.put(block.blockID, block);
 			
 			computeUTXO(head);
-			cleanMemoryPool(head);
+			cleanMemoryPool();
 			
 		} else if(blockchain.containsKey(block.prevBlockID)) {
 
@@ -167,26 +171,52 @@ public class CachedBlockchain {
 				if(block.height > head.height) {
 					head = block;
 				}
-				//System.out.println("Time " + CommonState.getTime());
-				//System.out.println(blockchainToJSON());
-				cleanMemoryPool(head);
 				
+				// the block has been successfully added to the blockchain. If the same block is the parent of one/many of the waiting blocks => handle the situation
+				if(waitingBlocks.containsKey(block.blockID)) {
+					System.err.println("Block " + block.blockID + " was necessary to other blocks");
+					System.err.flush();
+					ArrayList<Block> blocksToAdd = waitingBlocks.get(block.blockID);
+					for(int i = 0; i < blocksToAdd.size(); i++)
+						addBlock(blocksToAdd.get(i));
+			
+					waitingBlocks.remove(block.blockID);
+				}
+				
+				cleanMemoryPool();
+		
 			}else {
-				cleanMemoryPool(head);
+				cleanMemoryPool();
 				return false;
 			}	
 				
-		} else {
-			// TODO see P2P Q&A on Moodle
-			SE METTO LA GENERAZIONE DEL BLOCCO CON MEDIA 10 e VARIANZA 5 si entra in questo stato! Una volta gestito questo posso passare al selfish mining
-			System.out.println("NOT YET IMPLEMENTED, prevBlockID requested is " + block.prevBlockID);
-			return false;
+		} else { // block with ID "prevBlockID" has not been received yet 
+		
+			// See P2P Q&A on Moodle
+			
+			if( ! waitingBlocks.containsKey(block.prevBlockID) ) 
+				waitingBlocks.put(block.prevBlockID, new ArrayList<Block>());
+			
+			ArrayList<Block> blocksToAdd = waitingBlocks.get(block.prevBlockID);
+			
+			for(int i = 0; i < blocksToAdd.size(); i++)
+				if (blocksToAdd.get(i).blockID == block.blockID)
+					return false; // already present
+	
+			//if(head.height == 251)
+			//	System.out.print("");
+			
+			System.out.println("Putting block "+ block.blockID +" in waiting queue for " + block.prevBlockID + " my blockchain has max height " + head.height);
+			waitingBlocks.get(block.prevBlockID).add(block);
+			return true;
 		}
+				
+		// If an attacker broadcasts invalid nodes? In theory one should verify the PoW. In this implementation I keep and broadcast the "waiting" block.
 		return true;
 	}
 	
 	private boolean isBlockValid(Block block) {
-		 /**TODO è troppo inefficiente? SI. Tieniti una copia di UTXO che non viene modificata
+		 /** Tieniti una copia di UTXO che non viene modificata
 		 * e che serve solo per quando aggiungi un blocco. Per controllare se è valido, puoi evitare computeUTXO.
 		 * Al più duplichi solo la struttura per quando devi ricominciare a lavorare sulle transazioni
 		 * 
@@ -200,7 +230,7 @@ public class CachedBlockchain {
 		
 		ArrayList<Transaction> accepted = new ArrayList<>();
 		
-		// L'ordine di visita delle transazioni è importante! Ho solamente una quantità di bitcoins, non una relazione con una transazione di output specifica 
+		// The order in which I visit transactions matters. I have just an amount of bitcoins, not a specific output associated to a specific transaction 
 		for (int i = 0; i < block.transactions.size(); i++) {
 			Transaction t = block.transactions.get(i);
 				
@@ -238,7 +268,7 @@ public class CachedBlockchain {
 			if(tmpBlock.prevBlockID == -1) genesisBlockFound = true;
 			
 			if(sixConfirmRule >= 6 || tmpBlock.confirmed == true) {
-				// Confirm the block (for no particular reasons :) )
+				// Confirm the block ( for no particular reasons )
 				tmpBlock.confirmed = true;
 			}
 			sixConfirmRule++;
@@ -266,18 +296,17 @@ public class CachedBlockchain {
 			
 		} while(!genesisBlockFound);
 		
-		/** DEBUG: CHECK THAT ALL NODES HAVE AN AMOUNT OF BITCOIN >= 0, otherwise you have done smth wrong */
+		/* DEBUG: CHECK THAT ALL NODES HAVE AN AMOUNT OF BITCOIN >= 0, otherwise you have done smth wrong */
 		for(int i = 0; i < UTXO.size(); i++) {
 			if(UTXO.get(i) < 0) {
-				System.err.println("UTXO BROKEN! value = " + UTXO.get(i) + " for node " + i + " time " + CommonState.getTime());	
-				// DEBUG 	
+				System.err.println("UTXO BROKEN! value = " + UTXO.get(i) + " for node " + i + " time " + CommonState.getTime());		
 				System.out.println(blockchainToJSON());
 			 	System.exit(0);
 			}
 		}				
 	}
 
-	private void cleanMemoryPool(Block block) {
+	private void cleanMemoryPool() {
 		// Remember that tempUTXO is an helper structure for the memPool
 		tempUTXO = (ArrayList<Integer>) UTXO.clone();
 		memPoolOfTransactions.clear();
@@ -306,23 +335,27 @@ public class CachedBlockchain {
 		It means: if I can spend them then it's ok
 		*/
 
-		// TODO STOP BROADCASTING. Se non c'è nel memory pool possono essere successe 2 cose:
+		// STOP BROADCASTING. Se non c'è nel memory pool possono essere successe 2 cose:
 		// o ho minato un blocco (che però potrebbe non essere stato confermato)
 		// oppure non l'ho ricevuta
-		// Se io la togliessi solo quando viene confermato il blocco, allora sarei sicuro. Però
+		// Se io la togliessi solo quando viene AGGIUNTO il blocco, allora sarei sicuro. SE IL BLOCCO DIVENTA ORFANO LA TRANSAZIONE IN BITCOIN VA RIFATTA, MI VA BENE.
 		// se io all'istante t devo minare un blocco e la seleziono, e nello stesso istante ricevo un blocco e lei viene confermata,
 		// allora rischio (non avendo output(h,i) di fare confusione e far spendere 2 volte la stessa 
 		// quantità all'utente. Nel caso la transazione arrivi dopo che ho minato 6 blocchi (impossibile) a quel punto sarebbe un altro problema
 		// visto che nel progetto il nodo sceglie i nodi quando gli viene chiesto di minare,
 		// a parte il caso limite non potrà scegliere mai una transazione confermata!
 		
+		// TODO un problema è quindi quello che liberare la mem pool significa uccidere anche le transazioni già ricevute. Però alcune di esse dopo l'AGGIUNTA di un blocco
+		// potrebbero non essere più valide, e dovrei controllarlo. Però in questo modo una transazione ancora valida non viene persa potenzialmente da tutti.
+		// A QUESTO PUNTO, SE MI TENGO GLI ID DELLE TRANSAZIONI GIA' RICEVUTE, TOGLIENDO QUELLE CHE HO AGGIUNTO NELLA BLOCKCHAIN, SO QUALI DEVO MANTENERE E EVITO IL CASO LIMITE.
+		// PERO' RIGUARDA ALGORITMI DOVE SI PARLA DELLA MEMPOOL ANCHE. CHE SI INTENDE PER CLEAR? :) :) FORSE SI INTENDONO PROPRIO QUESTI ULTIMI DISCORSI
+		// Questo nasce dal fatto che un miner inizia a minare le transazioni che ha, e quelle che riceve dopo amen.
+		// 
+		
 		if(memPoolOfTransactions.containsKey(t.transID)) {
 			return false;
-		}
-		
-		
+		}	
 		if(!canSpendMoney(tempUTXO, t)) {
-			// It may be possible that I have not received other transactions that make the amount of bitcoins owned by an account increase!
 			//System.out.println(t.srcAddress + " does not have enough money in my local state! "+ t.bitcoins + " required. Discarding");
 			return false;
 		}
