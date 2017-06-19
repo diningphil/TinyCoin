@@ -24,9 +24,10 @@ public class CachedBlockchain {
 	
 	// TODO I should keep just the UTXO (but I would need output transactions, not just bitcoins)
 	private HashMap<Long, Block> blockchain;
-	private ArrayList<Integer> UTXO; // bitcoin address --> amount of bitcoins
+	private ArrayList<Integer> UTXO; // bitcoin address --> amount of bitcoins in the blockchain (considering the longest chain)
 	
-	
+	// These fields are useful to simulate a local pool of transactions
+	private ArrayList<Integer> tempUTXO; // bitcoin address --> temporary amount of bitcoins, needed to accept a transaction
 	private HashMap<Long, Transaction> memPoolOfTransactions;
 	private ArrayList<Long> orderedTransactionsInPool; // FIFO QUEUE
 
@@ -41,17 +42,23 @@ public class CachedBlockchain {
 			for(int i = 0; i < Network.size(); i++)
 				UTXO.add(i, 0);;
 	
+		tempUTXO = (ArrayList<Integer>) UTXO.clone();
 		memPoolOfTransactions = new HashMap<>();
 		orderedTransactionsInPool = new ArrayList<>();
 	}
 
-	public Transaction buildTransaction(long nodeID) {
+	public Transaction buildTransaction(long nodeID) { // use tempUTXO since
 
 		// TODO: DANGEROUS CAST TO INT! SORT THINGS OUT!
-		int nodeBTCs = UTXO.get((int) nodeID);
+		int nodeBTCs = tempUTXO.get((int) nodeID);
 		
-		if (nodeBTCs <= 0) // TODO Metti == 0 quando hai risolto problema
+		if (nodeBTCs == 0) // TODO Metti == 0 quando hai risolto problema
 			return null;
+		else if(nodeBTCs < 0) {
+			System.err.println("Bitcoins for " + nodeID + " are < 0! " + nodeBTCs);
+			System.out.println(blockchainToJSON());
+			System.exit(0);
+		}
 		
 		int transBTCs = SharedInfo.random.nextInt(nodeBTCs) + 1; // avoid 0 BTC transactions
 		int destNode = SharedInfo.random.nextInt(Network.size());
@@ -68,8 +75,7 @@ public class CachedBlockchain {
 		Block block = buildBlock(nodeID); // pass the minerID
 		
 		if(block != null) {
-			// Compute algo di ricezione blocco, false se non va bene
-			if(addBlock(block)) return block;			
+			return block;			
 		}
 		return null;
 	}
@@ -84,15 +90,17 @@ public class CachedBlockchain {
 		ma non per gli altri in principio! Quindi devo basarmi sulla blockchain. lo stato può divergere localmente
 		ma la blockchain alla fine sarà la stessa con alta probabilità.
 		*/
-		// IMPORTANT: I KNOW THAT THE BLOCK WILL BE ADDED LATER: IT'S MY ASSUMPTION! THIS METHOD
+		// IMPORTANT: I KNOW THAT addBlock WILL BE CALLED LATER: IT'S MY ASSUMPTION! THIS METHOD
 		// SHOULD BE PRIVATE!!
 		
 		
 		// TODO: DANGEROUS CAST TO INT! SORT THINGS OUT!
 		Block b = new Block((int) nodeID, head.blockID);
 	
-		computeUTXO(head); 
-		
+		// Unnecessary, given the presence of tempUTXO
+		//computeUTXO(head); 
+		ArrayList<Integer> helperUTXO = (ArrayList<Integer>) UTXO.clone();
+			
 		int size = orderedTransactionsInPool.size();
 
 		int i = 0;
@@ -100,19 +108,23 @@ public class CachedBlockchain {
 			// No overhead due to left shifting of the array
 			Transaction t = memPoolOfTransactions.get(orderedTransactionsInPool.remove(size-1));
 			
-			if(iCanSpendMoney(t)) {
-				b.addTransaction(t.transID, t.bitcoins, t.srcAddress, t.destAddress);			
-				// Modify the temporary UTXO (needed for creation of the block)
-				int srcAmount = UTXO.get(t.srcAddress);
-				UTXO.set(t.srcAddress, srcAmount - t.bitcoins);
-				int destAmount = UTXO.get(t.destAddress);
-				UTXO.set(t.destAddress, destAmount + t.bitcoins);
+			if(canSpendMoney(helperUTXO, t)) { // at least one transaction can be added
+				b.addTransaction(t);			
+				
+				int srcAmount = helperUTXO.get(t.srcAddress);
+				helperUTXO.set(t.srcAddress, srcAmount - t.bitcoins);
+				int destAmount = helperUTXO.get(t.destAddress);
+				helperUTXO.set(t.destAddress, destAmount + t.bitcoins);
 			}
 			
 			size--;
 		}
 		
-		if (i > 0) return b;
+		if (i > 0) {
+			b.blockID = SharedInfo.getNextBlockID();		
+			if(addBlock(b)) return b;
+			else { System.err.println("Add block should be true!"); return null; }
+		}
 		
 		return null;
 	}
@@ -130,11 +142,11 @@ public class CachedBlockchain {
 		E gestisco il fatto della Q&A.
 		*/
 		
-		if(blockchain.containsKey(block.blockID)) 
+		if(blockchain.containsKey(block.blockID)) // I should not keep the block chain, but it is useful for debugging and for the project
 			return false; // already present
 	
 		
-		if(block.prevBlockID == -1 && head == null) { // Check if I'm adding the genesis block			
+		if(block.blockID == -1 && head == null) { // Check if I'm adding the genesis block			
 		// Executed just 1 time
 			
 			head = block;
@@ -146,7 +158,7 @@ public class CachedBlockchain {
 			
 		} else if(blockchain.containsKey(block.prevBlockID)) {
 
-			if(isBlockValid(block)) { // recomputes and already updates the UTXO. if the block is not valid, just recomputes UTXO
+			if(isBlockValid(block)) { // this function recomputes and already updates the UTXO. if the block is not valid, the state is kept consistent
 			
 				block.height = blockchain.get(block.prevBlockID).height + 1;
 				block.confirmed = false; // Not necessary, given prj assumptions
@@ -162,10 +174,11 @@ public class CachedBlockchain {
 			}else {
 				cleanMemoryPool(head);
 				return false;
-			}			
-	
+			}	
+				
 		} else {
 			// TODO see P2P Q&A on Moodle
+			SE METTO LA GENERAZIONE DEL BLOCCO CON MEDIA 10 e VARIANZA 5 si entra in questo stato! Una volta gestito questo posso passare al selfish mining
 			System.out.println("NOT YET IMPLEMENTED, prevBlockID requested is " + block.prevBlockID);
 			return false;
 		}
@@ -173,20 +186,25 @@ public class CachedBlockchain {
 	}
 	
 	private boolean isBlockValid(Block block) {
-		 TODO è troppo inefficiente? SI. Tieniti una copia di UTXO che non viene modificata
+		 /**TODO è troppo inefficiente? SI. Tieniti una copia di UTXO che non viene modificata
 		 * e che serve solo per quando aggiungi un blocco. Per controllare se è valido, puoi evitare computeUTXO.
 		 * Al più duplichi solo la struttura per quando devi ricominciare a lavorare sulle transazioni
-		 * */
+		 * 
 		 il fatto è che ho mischiato la mempool con la UTXO. Mantenendo una copia dei bitcoin che riflette la blockchain
 		 e una che riflette lo stato locale delle transazioni, rappresento meglio il discorso di togliere un input
 		 dalla mempool!
+		 */
 		
-		computeUTXO(head); 
+		// Unnecessary with tempUTXO, UTXO is the state of the block chain, tempUTXO has been modified by incoming transactions
+		//computeUTXO(head); 
 		
 		ArrayList<Transaction> accepted = new ArrayList<>();
 		
-		for (Transaction t: block.transactions.values()) {
-			if(iCanSpendMoney(t)) {
+		// L'ordine di visita delle transazioni è importante! Ho solamente una quantità di bitcoins, non una relazione con una transazione di output specifica 
+		for (int i = 0; i < block.transactions.size(); i++) {
+			Transaction t = block.transactions.get(i);
+				
+			if(canSpendMoney(UTXO, t)) {
 				accepted.add(t);
 				// Modify the temporary UTXO (needed for creation of the block)
 				int srcAmount = UTXO.get(t.srcAddress);
@@ -225,10 +243,8 @@ public class CachedBlockchain {
 			}
 			sixConfirmRule++;
 			
-			Iterator<Long> it = tmpBlock.transactions.keySet().iterator();
-			while(it.hasNext()) {
-				long nextTransID = it.next();
-				Transaction t = tmpBlock.transactions.get(nextTransID);
+			for(int i = 0; i < tmpBlock.transactions.size(); i++) {
+				Transaction t = tmpBlock.transactions.get(i);
 								
 				if(!genesisBlockFound) {
 					int srcAmount = UTXO.get(t.srcAddress);
@@ -262,8 +278,8 @@ public class CachedBlockchain {
 	}
 
 	private void cleanMemoryPool(Block block) {
-//		Iterator<Long> it = block.transactions.keySet().iterator();
-//		while(it.hasNext()) {
+		// Remember that tempUTXO is an helper structure for the memPool
+		tempUTXO = (ArrayList<Integer>) UTXO.clone();
 		memPoolOfTransactions.clear();
 		orderedTransactionsInPool.clear();
 	//	}
@@ -286,6 +302,8 @@ public class CachedBlockchain {
 				Drop t and stop
 			end if
 		end for
+		
+		It means: if I can spend them then it's ok
 		*/
 
 		// TODO STOP BROADCASTING. Se non c'è nel memory pool possono essere successe 2 cose:
@@ -303,7 +321,7 @@ public class CachedBlockchain {
 		}
 		
 		
-		if(!iCanSpendMoney(t)) {
+		if(!canSpendMoney(tempUTXO, t)) {
 			// It may be possible that I have not received other transactions that make the amount of bitcoins owned by an account increase!
 			//System.out.println(t.srcAddress + " does not have enough money in my local state! "+ t.bitcoins + " required. Discarding");
 			return false;
@@ -318,8 +336,8 @@ public class CachedBlockchain {
 		/** for each input (h, i) in t do	
 	 	  *   Remove (h, i) from local UTXO
 		  * end for */
-		UTXO.set(t.srcAddress, UTXO.get(t.srcAddress) - t.bitcoins);
-		UTXO.set(t.destAddress, UTXO.get(t.destAddress) + t.bitcoins);
+		tempUTXO.set(t.srcAddress, tempUTXO.get(t.srcAddress) - t.bitcoins);
+		tempUTXO.set(t.destAddress, tempUTXO.get(t.destAddress) + t.bitcoins);
 		
 		// Append t to local memory pool	
 		memPoolOfTransactions.put(t.transID, t);
@@ -328,8 +346,8 @@ public class CachedBlockchain {
 		return true;
 	}
 	
-	private boolean iCanSpendMoney(Transaction t) {
-		int ownedAmount = UTXO.get(t.srcAddress); 
+	private boolean canSpendMoney(ArrayList<Integer> bitcoinStructure, Transaction t) {
+		int ownedAmount = bitcoinStructure.get(t.srcAddress); 
 		if (ownedAmount < t.bitcoins) {
 			return false; // discard
 		}

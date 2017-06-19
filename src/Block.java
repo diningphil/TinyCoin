@@ -1,4 +1,4 @@
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Iterator;
 
 public class Block {
@@ -6,14 +6,14 @@ public class Block {
 	public Block(int minerID, long prevID) {
 		this.minerID = minerID;
 		prevBlockID = prevID;
-		blockID = SharedInfo.getNextBlockID();
+		blockID = -1;
 		extraReward = 0;
 		extraLatency = 0;	
 		confirmed = false;
 		
 		//inputTransactions = new HashMap<>();
 		//outputTransactions = new HashMap<>();	
-		transactions = new HashMap<>();	
+		transactions = new ArrayList<>();	
 		
 		height = 0;
 	}
@@ -26,18 +26,16 @@ public class Block {
 	
 	//public HashMap<Long,Transaction> inputTransactions;
 	//public HashMap<Long,Transaction> outputTransactions;
-	public HashMap<Long,Transaction> transactions;
-	public void addTransaction(long transactionID, int amount, int src, int dest) {
+	public ArrayList<Transaction> transactions;
+	public void addTransaction(Transaction t) {
 		
 		// This would better resembles the actual implementation, but there are problems
 		// When checking if an input transaction exists ( because of assumptions of single input/output)
 		//Transaction input = new Transaction(transactionID, amount, src);
 		//Transaction output = new Transaction(transactionID, amount, dest);
 		//inputTransactions.put(transactionID, input);
-		//outputTransactions.put(transactionID, output);
-				
-		Transaction t = new Transaction(transactionID, amount, src, dest);
-		transactions.put(transactionID, t);
+		//outputTransactions.put(transactionID, output);		
+		transactions.add(t);
 		
 		extraReward += SharedInfo.addRewardPerTransaction;
 		extraLatency += SharedInfo.addLatencyPerTransaction;
@@ -57,7 +55,7 @@ public class Block {
 	}
 	private String transactionsToJSON() {
 		String res = "[";
-		Iterator<Transaction> it = transactions.values().iterator();
+		Iterator<Transaction> it = transactions.iterator();
 		while(it.hasNext()) {
 			res += it.next().toJSON();
 			if(it.hasNext()) res += ",";

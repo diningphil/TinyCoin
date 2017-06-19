@@ -16,7 +16,8 @@ public class Oracle implements Control{
 		genesisBlock.confirmed = true;
 		
 		for(int i = 0; i < Network.size(); i++) { // for each node
-			genesisBlock.addTransaction(SharedInfo.getNextTransactionID(), SharedInfo.random.nextInt(SharedInfo.maxInitialAmount), -1, i);
+			Transaction t = new Transaction(SharedInfo.getNextTransactionID(), SharedInfo.random.nextInt(SharedInfo.maxInitialAmount), -1, i);
+			genesisBlock.addTransaction(t);
 		}
 	
 	}

@@ -109,8 +109,10 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		
 			if (block != null) { // There were transactions to mine	
 				// Broadcast the block
-				//System.out.println("Broadcasting block " + block.blockID);
+				System.out.println("Broadcasting MINED block " + block.blockID);
 				broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, block, node.getID()));
+			} else {
+				System.out.println("NULL BLOCK");
 			}
 		} else {
 			normalHandle(node, pid, msg);
