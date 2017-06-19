@@ -177,6 +177,9 @@ public class CachedBlockchain {
 		 * e che serve solo per quando aggiungi un blocco. Per controllare se è valido, puoi evitare computeUTXO.
 		 * Al più duplichi solo la struttura per quando devi ricominciare a lavorare sulle transazioni
 		 * */
+		 il fatto è che ho mischiato la mempool con la UTXO. Mantenendo una copia dei bitcoin che riflette la blockchain
+		 e una che riflette lo stato locale delle transazioni, rappresento meglio il discorso di togliere un input
+		 dalla mempool!
 		
 		computeUTXO(head); 
 		
