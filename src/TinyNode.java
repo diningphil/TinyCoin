@@ -122,7 +122,8 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		// If it is a Block, append it to the blockchain (execute algorithm) AND not received yet
 		// (Notice: if its father has not been received, keep it in a local cache)
 		else if (msg.type == TinyCoinMessage.BLOCK) {
-			
+			if(node.getID() == 70 && ((Block)msg.message).blockID == 19)
+				System.err.println("Ci siamo");
 			if(receiveBlock((Block)msg.message)) {
 				System.out.println("Node " + node.getID() + " received new BLOCK "+ ((Block)msg.message).blockID  +"at time " + CommonState.getTime());
 				broadcastMessage(node, pid, msg);

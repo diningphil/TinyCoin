@@ -193,8 +193,13 @@ public class CachedBlockchain {
 			*/
 			
 			if(block.blockID == 48){
-				System.out.print(blockchainToJSON());
-				//C'è un problema: nonostante le blockchains siano uguali, uno di loro ha un valore diverso per il nodo 53..
+				System.out.println(blockchainToJSON());
+				C'è un problema: nonostante le blockchains siano uguali, uno di loro ha un valore diverso per il nodo 53.
+				Il blocco 18 è presente, solo che il mio metodo statmpa solo la chain più lunga. E' comunque probabile che
+				ci sia un problema quando la forked chain ha la stessa lunghezza, e scelto la UTXO sbagliata!
+				
+				//Devo lavorare assumendo che potrei non avere tutte le transazioni localmente
+				
 			}
 			
 			// This is necessary because I do not use a tree to represent the blockchain
@@ -253,7 +258,7 @@ public class CachedBlockchain {
 
 					for(Transaction t: block.transactions) {
 						if(!confirmedTransactions.contains(t.transID))
-							System.err.println("I had not received transaction " + t.transID);
+							//System.err.println("I had not received transaction " + t.transID);
 						confirmedTransactions.add(t.transID);
 					}
 					
