@@ -9,7 +9,6 @@ public class Block {
 		blockID = -1;
 		extraReward = 0;
 		extraLatency = 0;	
-		confirmed = false;
 		
 		//inputTransactions = new HashMap<>();
 		//outputTransactions = new HashMap<>();	
@@ -22,7 +21,6 @@ public class Block {
 	public int minerID;
 	public int extraReward, extraLatency;
 	public int height;
-	public boolean confirmed;
 	
 	//public HashMap<Long,Transaction> inputTransactions;
 	//public HashMap<Long,Transaction> outputTransactions;
@@ -49,7 +47,6 @@ public class Block {
 				+ "height:" + height + ","
 				+ "extraReward:" + extraReward + ","
 				+ "extraLatency:" + extraLatency + "," 
-				+ "confirmed:" + confirmed + ","
 				+ "transactions:" + transactionsToJSON()
 				+ "}";
 	}

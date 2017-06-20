@@ -97,9 +97,9 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 				// Broadcast the block
 				System.out.println("Broadcasting MINED block " + block.blockID);
 				broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, block, node.getID()));
-			} else {
-				System.out.println("NULL BLOCK => no transactions to mine. It may happen when I have received a block very few time ago, check if data structure is empty");
-			}
+			}// else {
+				//System.out.println("NULL BLOCK => no transactions to mine. It may happen when I have received a block very few time ago, check if data structure is empty");
+			//}
 		} else {
 			normalHandle(node, pid, msg);
 		}
@@ -123,7 +123,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		// (Notice: if its father has not been received, keep it in a local cache)
 		else if (msg.type == TinyCoinMessage.BLOCK) {
 			
-			if(addBlock((Block)msg.message)) {
+			if(receiveBlock((Block)msg.message)) {
 				System.out.println("Node " + node.getID() + " received new BLOCK "+ ((Block)msg.message).blockID  +"at time " + CommonState.getTime());
 				broadcastMessage(node, pid, msg);
 			}
@@ -142,8 +142,8 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 	}
 
 
-	public boolean addBlock(Block genesisBlock) {
-		return localBlockchain.addBlock(genesisBlock);	
+	public boolean receiveBlock(Block block) {
+		return localBlockchain.receiveBlock(block);	
 	}
 
 

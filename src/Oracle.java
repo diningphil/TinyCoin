@@ -13,7 +13,7 @@ public class Oracle implements Control{
 		pid = Configuration.getPid(prefix + "." + PAR_PROT);
 			
 		genesisBlock = new Block(-1, -1); // minerID, prevBlockID
-		genesisBlock.confirmed = true;
+		//genesisBlock.confirmed = true;
 		
 		for(int i = 0; i < Network.size(); i++) { // for each node
 			Transaction t = new Transaction(SharedInfo.getNextTransactionID(), SharedInfo.random.nextInt(SharedInfo.maxInitialAmount), -1, i);
