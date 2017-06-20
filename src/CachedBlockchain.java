@@ -1,8 +1,5 @@
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.TreeSet;
 
 import peersim.core.CommonState;
@@ -10,7 +7,7 @@ import peersim.core.Network;
 
 public class CachedBlockchain {
 	/** 
-	 * This class maintains:
+	 * This class maintains:confirmedTransactions.add
 	 * - memory pool of received transactions (which are not in confirmed blocks)
 	 * - blockchain
 	 * - UTXO
@@ -24,16 +21,14 @@ public class CachedBlockchain {
 	
 	private Block head;
 	
-	// TODO I should keep just the UTXO (but I would need output transactions, not just bitcoins). I could use a structure that keeps block ids
-	private HashMap<Long, Block> blockchain;
-	
+	private HashMap<Long, Block> blockchain; // This blockchain represents the UTXO if we want, we have only output transactions!
 	
 	/** DEBUG */
-	public TreeSet<Long> receivedBlockIDs;
-	public TreeSet<Long> refusedBlockIDs;
-	private TreeSet<Long> waitingBlockIDs;
+	//public TreeSet<Long> receivedBlockIDs;
+	//public TreeSet<Long> refusedBlockIDs;
+	//private TreeSet<Long> waitingBlockIDs;
 	
-	private HashSet<Long> confirmedTransactions; // Those added to the block chain TODO DA RIVEDERE!! NON VA BENE CON LE FORK
+	//private TreeSet<Long> confirmedTransactions; // Those added to the block chain TODO DA RIVEDERE!! NON VA BENE CON LE FORK
 	
 	
 	private ArrayList<Integer> UTXO; // bitcoin address --> amount of bitcoins in the blockchain (considering the longest chain)
@@ -52,18 +47,19 @@ public class CachedBlockchain {
 			UTXO.set(i, 0);;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public CachedBlockchain() {
 		blockchain = new HashMap<>();
 		
-		receivedBlockIDs = new TreeSet<>();
-		refusedBlockIDs = new TreeSet<>();
-		waitingBlockIDs = new TreeSet<>();
+		//receivedBlockIDs = new TreeSet<>();
+		//refusedBlockIDs = new TreeSet<>();
+		//waitingBlockIDs = new TreeSet<>();
 		
-		confirmedTransactions = new HashSet<>();
+		//confirmedTransactions = new TreeSet<>();
 		UTXO = new ArrayList<>(Network.size());
 			for(int i = 0; i < Network.size(); i++)
 				UTXO.add(i, 0);;
-				
+
 		tempUTXO = (ArrayList<Integer>) UTXO.clone();
 		memPoolOfTransactions = new HashMap<>();
 		orderedTransactionsInPool = new ArrayList<>();
@@ -76,11 +72,12 @@ public class CachedBlockchain {
 		// TODO: DANGEROUS CAST TO INT! SORT THINGS OUT!
 		int nodeBTCs = tempUTXO.get((int) nodeID);
 		
-		if (nodeBTCs == 0)
+		if (nodeBTCs == 0) {
+			//System.out.println("Node " + nodeID + " does not have money");
 			return null;
-		else if(nodeBTCs < 0) {
+		} else if(nodeBTCs < 0) {
 			System.err.println("Bitcoins for " + nodeID + " are < 0! " + nodeBTCs);
-			System.out.println(blockchainToJSON());
+			System.out.println(longestPathToJSON());
 			System.exit(0);
 		}
 		
@@ -106,24 +103,21 @@ public class CachedBlockchain {
 	private Block buildBlock(long nodeID) {
 		
 		/*
-		quello che non capisco è: se ho potuto costruire un blocco significa che io ho potuto 
-		accettare le transazioni. Quindi devo assicurarmi solamente che il blocco sia valido nel
+		Quindi devo assicurarmi solamente che il blocco sia valido nel
 		caso venga appeso alla blockchain. a quel punto son sicuro che le transazioni che ci 
-		metto non sono a caso! Possibile che l'ordine di ricezione non vada bene? Va bene per me,
+		metto non sono a caso! Inoltre l'ordine di ricezione va bene per me,
 		ma non per gli altri in principio! Quindi devo basarmi sulla blockchain. lo stato può divergere localmente
 		ma la blockchain alla fine sarà la stessa con alta probabilità.
 		*/
-		// IMPORTANT: I KNOW THAT addBlock WILL BE CALLED LATER: IT'S MY ASSUMPTION! THIS METHOD
-		// SHOULD BE PRIVATE!!
-		
 		
 		// TODO: DANGEROUS CAST TO INT! SORT THINGS OUT!
 		Block b = new Block((int) nodeID, head.blockID);
 	
+		@SuppressWarnings("unchecked")
 		ArrayList<Integer> helperUTXO = (ArrayList<Integer>) UTXO.clone();
 			
 		int added = 0;
-		for(int i = 0; i < orderedTransactionsInPool.size() && i < SharedInfo.maxTransPerBlock; i++) {
+		for(int i = 0; i < orderedTransactionsInPool.size() && added < SharedInfo.maxTransPerBlock; i++) {
 			Transaction t = memPoolOfTransactions.get(orderedTransactionsInPool.get(i));
 			if(canSpendMoney(helperUTXO, t)) { // at least one transaction can be added
 				b.addTransaction(t);			
@@ -147,7 +141,7 @@ public class CachedBlockchain {
 	
 	public boolean receiveBlock(Block block) {
 		
-		if(blockchain.containsKey(block.blockID)) // I should not keep the block chain, but it is useful for debugging and for the project
+		if(blockchain.containsKey(block.blockID))
 			return false; // already present
 	
 		if(block.blockID == -1 && head == null) { // Check if I'm adding the genesis block			
@@ -174,34 +168,6 @@ public class CachedBlockchain {
 			
 		} else if(blockchain.containsKey(block.prevBlockID)) {
 
-			// TODO
-			/*ATTENZIONE SEMBRA CHE IO, QUANDO DEVO AGGIUNGERE UN BLOCCO CHE CREA UNA FORK, GUARDI ALLA UTXO CORRENTE,
-			CHE PERO VA DALLA TESTA IN GIU, OVVERO DALL ALTRO BLOCCO !! QUINDI QUESTO NON VA ASSOLUTAMENTE BENE.
-			
-			POTREI GUARDARE SI LA BLOCKCHAIN (CHE DATE LE ASSUNZIONI è COME LA UTXO),
-			MA SE INSERISCO UN TIMESTAMP NEL BLOCCO QUANDO LO MINO (=> LE TRANSAZIONI HANNO TIMESTAMP MINORE),
-			PER VEDERE SE LA TRANSAZIONE NON C è, BASTA ISPEZIONARE LA BLOCKCHAIN FINO A QUANDO NON ARRIVO AD UN TIMESTAMP MINORE
-			
-			NEL CASO IL BLOCCO NON ABBIA COME PREDECESSORE HEAD, SI POTREBBE CREARE UNA FORK O NE STO ESTENDENDO UNA. SOLO IN QUESTO CASO IO VADO A RICALCOLARE
-			LA UTXO A PARTIRE DA ME STESSO. SE POSSO AGGIUNGERE IL BLOCCO (E IL MIO PROGRAMMA CREA SOLO BLOCCHI VALIDI PER ORA, QUINDI SI)
-			ALLORA SE IL NUOVO BRANCH è DIVENTATO PIù LUNGO, DEVO DISFARE DALLA HEAD FINO AL PUNTO DI BRANCH E APPLICARE I NUOVI BLOCCHI ALLA UTXO
-			QUINDI IO APPLICO LE MODIFICHE A UTXO SOLO NEL CASO CHE SIA NEL BRANCH MAGGIORE.
-			
-		
-			PERò ADESSO, COME FACCIO A DIRE SE POSSO AGGIUNGERE UN BLOCCO NELLA BRANCH PIù CORTA? NON POSSO USARE Nè UTXO
-			Nè tempUTXO!
-			*/
-			
-			if(block.blockID == 48){
-				System.out.println(blockchainToJSON());
-				C'è un problema: nonostante le blockchains siano uguali, uno di loro ha un valore diverso per il nodo 53.
-				Il blocco 18 è presente, solo che il mio metodo statmpa solo la chain più lunga. E' comunque probabile che
-				ci sia un problema quando la forked chain ha la stessa lunghezza, e scelto la UTXO sbagliata!
-				
-				//Devo lavorare assumendo che potrei non avere tutte le transazioni localmente
-				
-			}
-			
 			// This is necessary because I do not use a tree to represent the blockchain
 			if(block.prevBlockID == head.blockID) {
 				// I want to append on the local longest path 
@@ -209,15 +175,16 @@ public class CachedBlockchain {
 				
 				if(isBlockValid(block, UTXO)) { // this function recomputes and already updates the UTXO. if the block is not valid, the state is kept consistent
 					
-					receivedBlockIDs.add(block.blockID); // DEBUGGING PURPOSES
+					//receivedBlockIDs.add(block.blockID); // DEBUGGING PURPOSES
 					
 					
 					block.height = blockchain.get(block.prevBlockID).height + 1;
 					
 					blockchain.put(block.blockID, block);
 
-					for(Transaction t: block.transactions)
-						confirmedTransactions.add(t.transID);
+					//for(Transaction t: block.transactions)
+					//	if(!confirmedTransactions.contains(t.transID))
+					//		confirmedTransactions.add(t.transID);
 					
 					if(block.height > head.height) {
 						head = block;
@@ -227,8 +194,7 @@ public class CachedBlockchain {
 					
 					// the block has been successfully added to the blockchain. If the same block is the parent of one/many of the waiting blocks => handle the situation
 					if(waitingBlocks.containsKey(block.blockID)) {
-						System.err.println("Block " + block.blockID + " was necessary to other blocks");
-						System.err.flush();
+						System.out.println("Block " + block.blockID + " was being waited by other blocks");
 						ArrayList<Block> blocksToAdd = waitingBlocks.get(block.blockID);
 						for(int i = 0; i < blocksToAdd.size(); i++)
 							receiveBlock(blocksToAdd.get(i));
@@ -240,7 +206,7 @@ public class CachedBlockchain {
 					cleanupMemoryPool(block);
 			
 				}else {
-					refusedBlockIDs.add(block.blockID);
+					//refusedBlockIDs.add(block.blockID);
 					return false;
 				}
 			} else {
@@ -249,21 +215,21 @@ public class CachedBlockchain {
 				ArrayList<Integer> forkedUTXO = computeForkedUTXO(block.prevBlockID);
 				if(isBlockValid(block, forkedUTXO)) { // this function recomputes and already updates the UTXO. if the block is not valid, the state is kept consistent
 					
-					receivedBlockIDs.add(block.blockID); // DEBUGGING PURPOSES
+					//receivedBlockIDs.add(block.blockID); // DEBUGGING PURPOSES
 					
 					
 					block.height = blockchain.get(block.prevBlockID).height + 1;
 					
 					blockchain.put(block.blockID, block);
 
-					for(Transaction t: block.transactions) {
-						if(!confirmedTransactions.contains(t.transID))
-							//System.err.println("I had not received transaction " + t.transID);
-						confirmedTransactions.add(t.transID);
-					}
+					//for(Transaction t: block.transactions)
+					//	if(!confirmedTransactions.contains(t.transID))
+					//		confirmedTransactions.add(t.transID);	
 					
 					if(block.height > head.height) {
 						head = block;
+						// CRUCIAL!
+						UTXO = forkedUTXO;
 					}
 					
 					// the block has been successfully added to the blockchain. If the same block is the parent of one/many of the waiting blocks => handle the situation
@@ -281,7 +247,7 @@ public class CachedBlockchain {
 					cleanupMemoryPool(block);
 			
 				}else {
-					refusedBlockIDs.add(block.blockID);
+					//refusedBlockIDs.add(block.blockID);
 					return false;
 				}
 				
@@ -294,7 +260,7 @@ public class CachedBlockchain {
 			if( ! waitingBlocks.containsKey(block.prevBlockID) ) 
 				waitingBlocks.put(block.prevBlockID, new ArrayList<Block>());
 			
-			waitingBlockIDs.add(block.blockID);
+			//waitingBlockIDs.add(block.blockID);
 			
 			
 			ArrayList<Block> blocksToAdd = waitingBlocks.get(block.prevBlockID);
@@ -307,10 +273,11 @@ public class CachedBlockchain {
 			//	System.out.print("");
 			
 			System.out.println("Putting block "+ block.blockID +" in waiting queue for " + block.prevBlockID + " my blockchain has max height " + head.height);
-			if(block.height - head.height > 200) {		
-				System.out.println(receivedBlockIDs.toString());
-				System.out.println(waitingBlockIDs.toString());
-				System.out.println(refusedBlockIDs.toString());
+			if(block.height - head.height > 10) {		
+				System.err	.println("C'è una differenza di blocchi di più di 10");
+				//System.out.println(receivedBlockIDs.toString());
+				//System.out.println(waitingBlockIDs.toString());
+				//System.out.println(refusedBlockIDs.toString());
 			}
 			waitingBlocks.get(block.prevBlockID).add(block);
 			return true;
@@ -337,8 +304,7 @@ public class CachedBlockchain {
 		for (int i = 0; i < block.transactions.size(); i++) {
 			Transaction t = block.transactions.get(i);
 				
-			if(canSpendMoney(currentUTXO, t)) { // TODO DEVE PARTIRE DAL MIO BLOCCO, NON DALLA UTXO CORRENTE, VEDI FORK!
-				
+			if(canSpendMoney(currentUTXO, t)) {
 			
 				//!confirmedTransactions.contains(t.transID)
 				
@@ -349,10 +315,11 @@ public class CachedBlockchain {
 				int destAmount = currentUTXO.get(t.destAddress);
 				currentUTXO.set(t.destAddress, destAmount + t.bitcoins);
 			}else {
+				// This branch should never occur 
 				
-				if(confirmedTransactions.contains(t.transID)) 
-					System.err.println("The block "+ block.blockID +" with prevBlockID "+ block.prevBlockID +" contains transaction "+ t.transID +" already confirmed (in a previous block in the blockchain)");
-					System.err.println(blockchainToJSON());
+				//if(confirmedTransactions.contains(t.transID)) 
+				//	System.err.println("The block "+ block.blockID +" with prevBlockID "+ block.prevBlockID +" contains transaction "+ t.transID +" already confirmed (in a previous block in the blockchain)");
+				//	System.err.println(longestPathToJSON());
 				
 				// REVERT ACCEPTED TRANSACTIONS!
 				for(Transaction t2: accepted){
@@ -377,6 +344,8 @@ public class CachedBlockchain {
 		
 		Block forkEnd = blockchain.get(blockID);
 		Block tmpBlock = head;
+		
+		@SuppressWarnings("unchecked")
 		ArrayList<Integer> forkedUTXO = (ArrayList<Integer>) UTXO.clone();
 		
 		assert head.height >= forkEnd.height;
@@ -439,9 +408,11 @@ public class CachedBlockchain {
 		return forkedUTXO;				
 	}
 
+	@SuppressWarnings("unchecked")
 	private void cleanupMemoryPool(Block block) {
 		// Remember that tempUTXO is an helper structure for the memPool
-		tempUTXO = (ArrayList<Integer>) UTXO.clone();
+		
+		this.tempUTXO = (ArrayList<Integer>) UTXO.clone();
 		
 		for(Transaction t: block.transactions) {
 			if(memPoolOfTransactions.containsKey(t.transID)) {
@@ -486,7 +457,7 @@ public class CachedBlockchain {
 		// visto che nel progetto il nodo sceglie i nodi quando gli viene chiesto di minare,
 		// a parte il caso limite non potrà scegliere mai una transazione confermata!
 		
-		// TODO un problema è quindi quello che liberare la mem pool significa uccidere anche le transazioni già ricevute. Però alcune di esse dopo l'AGGIUNTA di un blocco
+		// SOLVED: un problema è quindi quello che liberare la mem pool significa uccidere anche le transazioni già ricevute. Però alcune di esse dopo l'AGGIUNTA di un blocco
 		// potrebbero non essere più valide, e dovrei controllarlo. Però in questo modo una transazione ancora valida non viene persa potenzialmente da tutti.
 		// A QUESTO PUNTO, SE MI TENGO GLI ID DELLE TRANSAZIONI GIA' RICEVUTE, TOGLIENDO QUELLE CHE HO AGGIUNTO NELLA BLOCKCHAIN, SO QUALI DEVO MANTENERE E EVITO IL CASO LIMITE.
 		// PERO' RIGUARDA ALGORITMI DOVE SI PARLA DELLA MEMPOOL ANCHE. CHE SI INTENDE PER CLEAR? :) :) FORSE SI INTENDONO PROPRIO QUESTI ULTIMI DISCORSI
@@ -496,7 +467,7 @@ public class CachedBlockchain {
 		// Altrimenti rischio di ricevere un blocco (o elaborare un blocco che stava aspettando il padre) e posso riaggiungere la stessa transazione!
 		
 		
-		if(memPoolOfTransactions.containsKey(t.transID) || confirmedTransactions.contains(t.transID) || !canSpendMoney(tempUTXO, t)) {
+		if(memPoolOfTransactions.containsKey(t.transID) /*|| confirmedTransactions.contains(t.transID) */ || !canSpendMoney(tempUTXO, t)) {
 			return false;
 		}	
 		
@@ -527,7 +498,7 @@ public class CachedBlockchain {
 		return true;
 	}
 
-	private String blockchainToJSON() {
+	private String longestPathToJSON() {
 		String res = "{ blockchain: [";
 		Block curr = null;
 		if(head != null) {

@@ -23,8 +23,6 @@ public class Oracle implements Control{
 	}
 	
 	private static int sendCountdown = -1;
-	// TODO VEDI SCHEDULING PER CONTROLLI EVENT DRIVEN (intro in tutorial Mark Jelasity)
-	
 	/*
 	 * This needs to be executed every cycle, keeping
 	 * an internal counter to decide if it is time to
@@ -64,7 +62,7 @@ public class Oracle implements Control{
 		
 		long chosenNode = -1;
 
-		// TODO MAY REQUIRE MUCH TIME WITH FEW NODES!!
+		// MAY REQUIRE MUCH TIME WITH FEW NODES!!
 		while(chosenNode == -1) {
 			int power = (int) (SharedInfo.random.nextFloat()*100);
 			if (power <= SharedInfo.cpuPower)
