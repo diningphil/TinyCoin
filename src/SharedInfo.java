@@ -16,8 +16,8 @@ public class SharedInfo {
 
     
     // Since Peersim is sequential (no concurrency) I can use this to be sure that the id is unique
-    public static long latestBlockID = 0;     
-    public static long transactionID = 0;
+    public static int latestBlockID = 0;     
+    public static int transactionID = 0;
 	    
     public static final Random random   = new Random(Configuration.getLong("random.seed"));
     
@@ -29,7 +29,8 @@ public class SharedInfo {
     
     public static final int blockReward = Configuration.getInt("BLOCK_REWARD"),
     						maxTransPerBlock = Configuration.getInt("MAX_TRANS_PER_BLOCK"),
-     						addLatencyPerTransaction = Configuration.getInt("EXTRA_LATENCY_PER_TRANS"),
+     						latency = Configuration.getInt("LATENCY"),
+    						addLatencyPerTransaction = Configuration.getInt("EXTRA_LATENCY_PER_TRANS"),
      						addRewardPerTransaction = Configuration.getInt("EXTRA_REWARD_PER_TRANS"),
      						transGenerationThreshold = Configuration.getInt("PROB_GENERATE_TRANS");
 
@@ -75,8 +76,8 @@ public class SharedInfo {
     	asics  = new ArrayList<Long>();
     }
 
-    public static long getNextBlockID () { return latestBlockID++; } 
-    public static long getNextTransactionID () { return transactionID++; } 
+    public static int getNextBlockID () { return latestBlockID++; } 
+    public static int getNextTransactionID () { return transactionID++; } 
     
     public static /*synchronized*/ SharedInfo getSharedInfo() {
         if (instance == null) {

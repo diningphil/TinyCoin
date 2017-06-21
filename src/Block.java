@@ -3,7 +3,7 @@ import java.util.Iterator;
 
 public class Block {
 	
-	public Block(int minerID, long prevID) {
+	public Block(int minerID, int prevID) {
 		this.minerID = minerID;
 		prevBlockID = prevID;
 		blockID = -1;
@@ -17,7 +17,7 @@ public class Block {
 		height = 0;
 	}
 	
-	public long blockID, prevBlockID;
+	public int blockID, prevBlockID;
 	public int minerID;
 	public int extraReward, extraLatency;
 	public int height;

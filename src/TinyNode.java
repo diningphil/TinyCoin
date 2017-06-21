@@ -4,6 +4,7 @@ import peersim.config.FastConfig;
 import peersim.core.Linkable;
 import peersim.core.Node;
 import peersim.edsim.EDProtocol;
+import peersim.edsim.EDSimulator;
 import peersim.transport.Transport;
 import peersim.vector.SingleValueHolder;
 
@@ -135,7 +136,10 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		Transport tr = (Transport) node.getProtocol(FastConfig.getTransport(pid));
 
 		for (Node n: neighbours) {
-			tr.send(node, n, msg, pid);
+			if(msg.type == TinyCoinMessage.BLOCK)
+				EDSimulator.add(SharedInfo.latency + ((Block) msg.message).extraLatency, msg, n, pid);
+			else
+				tr.send(node, n, msg, pid);
 		}
 		
 	}

@@ -1,7 +1,7 @@
 
-public class Transaction {
+public class Transaction implements Comparable<Transaction>{
 	
-	public long transID;
+	public int transID;
 	public int bitcoins;
 	//public long address;
 	public int srcAddress;
@@ -9,7 +9,7 @@ public class Transaction {
 
 	
 	//public Transaction(long id, int b, long addr) {
-	public Transaction(long id, int b, int src, int dest) {
+	public Transaction(int id, int b, int src, int dest) {
 		transID = id;
 		bitcoins = b;
 		//address = addr;
@@ -24,6 +24,11 @@ public class Transaction {
 				+ "srcAddress:" + srcAddress + ","
 				+ "destAddress:" + destAddress
 				+ "}";
+	}
+
+	@Override
+	public int compareTo(Transaction t) {
+		return (transID - t.transID);
 	}
 	
 }
