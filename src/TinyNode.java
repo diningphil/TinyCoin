@@ -12,7 +12,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 
 	private ArrayList<Node> neighbours;
 	private int nodeType;
-	private CachedBlockchain localBlockchain;
+	public CachedBlockchain localBlockchain;
 
 	public TinyNode(String prefix) { 
 		super(prefix);
@@ -92,7 +92,6 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		
 		// If it is MINED message
 		if(msg.type == TinyCoinMessage.MINED) {
-			//System.out.println("Node " + node.getID() + " received MINED at time " + CommonState.getTime());
 			
 			Block block = localBlockchain.mineBlock(nodeID);
 		
@@ -117,8 +116,6 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		if(msg.type == TinyCoinMessage.TRANSACTION) {
 			Transaction t = (Transaction) msg.message;
 			
-			//System.err.println("Node " + node.getID() + " received TRANSACTION " + t.transID + "at time " + CommonState.getTime() + " from " + msg.sender);
-			
 			if(localBlockchain.receiveTransaction(t))
 				broadcastMessage(node, pid, msg);
 		}
@@ -128,9 +125,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 			if(receiveBlock((Block)msg.message)) {
 				//System.out.println("Node " + node.getID() + " added new BLOCK "+ ((Block)msg.message).blockID  +"at time " + CommonState.getTime());
 				broadcastMessage(node, pid, msg);
-			}//else {
-			//	System.out.println("Node " + node.getID() + " rejected BLOCK "+ ((Block)msg.message).blockID  +"at time " + CommonState.getTime());
-			//}
+			}
 		}
 		
 	}

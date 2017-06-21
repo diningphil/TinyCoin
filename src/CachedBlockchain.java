@@ -20,8 +20,8 @@ public class CachedBlockchain {
 	 */
 	
 	public long nodeID = -1;
-	
-	private Block head;
+
+	public Block head;
 	
 	private HashMap<Integer, Block> blockchain; // This blockchain represents the UTXO if we want, we have only output transactions!
 	
@@ -32,8 +32,7 @@ public class CachedBlockchain {
 	
 	private TreeSet<Integer> acceptedTransactions; // Those added to the longest path in the block chain
 	
-	
-	private ArrayList<Integer> UTXO; // bitcoin address --> amount of bitcoins in the blockchain (considering the longest chain)
+	public ArrayList<Integer> UTXO; // bitcoin address --> amount of bitcoins in the blockchain (considering the longest chain)
 	
 	// These fields are useful to simulate a local pool of transactions
 	private ArrayList<Integer> tempUTXO; // bitcoin address --> temporary amount of bitcoins, needed to accept a transaction
@@ -81,7 +80,7 @@ public class CachedBlockchain {
 			return null;
 		} else if(nodeBTCs < 0) {
 			System.err.println("Bitcoins for " + nodeID + " are < 0! " + nodeBTCs);
-			System.out.println(longestPathToJSON());
+			System.out.println(longestPathToJSON(head));
 			System.exit(0);
 		}
 		
@@ -127,22 +126,32 @@ public class CachedBlockchain {
 				b.addTransaction(t);			
 				added++;
 				
-				int srcAmount = helperUTXO.get(t.srcAddress);
-				helperUTXO.set(t.srcAddress, srcAmount - t.bitcoins);
-				int destAmount = helperUTXO.get(t.destAddress);
-				helperUTXO.set(t.destAddress, destAmount + t.bitcoins);
+				updateUTXO(t, helperUTXO);
 			}	
 		}
 		
 		if (added > 0) {
-			b.blockID = SharedInfo.getNextBlockID();		
+			b.blockID = SharedInfo.getNextBlockID();	
+			
+			if(b.blockID == 77) {
+				
+				System.out.println(longestPathToJSON(head));
+				System.out.println("NODE "+nodeID+" Broadcaster UTXO");
+				
+				for(int i : UTXO)
+					System.out.print(i + " ");
+				System.out.println();
+							
+			}
+			
 			if(receiveBlock(b)) return b;
 			else { System.err.println("Add block should be true!"); return null; }
 		}
 		
 		return null;
+
 	}
-	
+	// TODO STESSA BLOCKCHAIN MA DIVERSA UTXO?
 	public boolean receiveBlock(Block block) {
 		
 		if(blockchain.containsKey(block.blockID))
@@ -210,12 +219,15 @@ public class CachedBlockchain {
 					cleanupMemoryPool(block);
 			
 				}else {
-					//refusedBlockIDs.add(block.blockID);
+					System.err.println("Normal case");
+					System.err.println("NODE "+ nodeID +" Block " + block.blockID + " has been refused. This should not happen");
+					System.err.println(longestPathToJSON(head));
 					return false;
 				}
 			} else {
 				// I want to create or extend another path which does not correspond to the longest
 				// I need to efficiently compute the UTXO for the branch
+				// ARGS: the id of my parent in the fork
 				TempForkData tmp = computeForkedUTXO(block.prevBlockID);
 				
 				if(isBlockValid(block, tmp.forkedUTXO)) { // this function recomputes and already updates the UTXO. if the block is not valid, the state is kept consistent
@@ -228,10 +240,11 @@ public class CachedBlockchain {
 					blockchain.put(block.blockID, block);
 
 					if(block.height > head.height) {
+						int oldHeadID = head.blockID;
 						head = block;
 						// CRUCIAL!
 						UTXO = tmp.forkedUTXO;		
-						System.out.println("A forked branch has become the main one, head is " + head.blockID);
+						System.out.println("NODE "+ nodeID +" A forked branch has replaced head "+ oldHeadID +", head is " + head.blockID);
 					} else {
 						restoreAcceptedTransactions(tmp); // computeForkedUTXO has a post-condition: acceptedTransaction is modified
   					}
@@ -251,11 +264,11 @@ public class CachedBlockchain {
 					cleanupMemoryPool(block);
 			
 				}else {
-					System.err.println("Block " + block.blockID + " has been refused. This should not happen");
-					//refusedBlockIDs.add(block.blockID);
-					return false;
+					System.err.println("Forked case");
+					System.err.println("NODE "+ nodeID +" Block " + block.blockID + " has been refused. This should not happen");
+					System.err.println(longestPathToJSON(head));
+					
 				}
-				
 			}
 			
 		} else { // block with ID "prevBlockID" has not been received yet 
@@ -277,7 +290,7 @@ public class CachedBlockchain {
 			//if(head.height == 251)
 			//	System.out.print("");
 			
-			System.out.println("Putting block "+ block.blockID +" in waiting queue for " + block.prevBlockID + " my blockchain has max height " + head.height);
+			System.out.println("NODE "+ nodeID +" Putting block "+ block.blockID +" in waiting queue for " + block.prevBlockID + " my blockchain has max height " + head.height);
 			waitingBlocks.get(block.prevBlockID).add(block);
 			return true;
 		}
@@ -303,30 +316,26 @@ public class CachedBlockchain {
 		for (int i = 0; i < block.transactions.size(); i++) {
 			Transaction t = block.transactions.get(i);
 				
+			if(acceptedTransactions.contains(t.transID)) { 
+				System.err.println("NODE "+ nodeID +" The block "+ block.blockID +" with prevBlockID "+ block.prevBlockID +" contains transaction "+ t.transID +" already confirmed (in a previous block in the blockchain)");
+				return false;
+			}
+			
 			if(canSpendMoney(currentUTXO, t)) {
 			
 				//!confirmedTransactions.contains(t.transID)
 				
 				accepted.add(t);
 				// Modify the temporary UTXO (needed for creation of the block)
-				int srcAmount = currentUTXO.get(t.srcAddress);
-				currentUTXO.set(t.srcAddress, srcAmount - t.bitcoins);
-				int destAmount = currentUTXO.get(t.destAddress);
-				currentUTXO.set(t.destAddress, destAmount + t.bitcoins);
+				updateUTXO(t, currentUTXO);
+				
 			}else {
 				// This branch should never occur 
-				
-				//if(confirmedTransactions.contains(t.transID)) 
-				//	System.err.println("The block "+ block.blockID +" with prevBlockID "+ block.prevBlockID +" contains transaction "+ t.transID +" already confirmed (in a previous block in the blockchain)");
-				//	System.err.println(longestPathToJSON());
-				
+				System.err.println("This branch in isBlockValid should never occurr");
 				// REVERT ACCEPTED TRANSACTIONS!
 				for(Transaction t2: accepted){
 					// NOTE: REVERTED SIGN!
-					int srcAmount = currentUTXO.get(t2.srcAddress);
-					currentUTXO.set(t2.srcAddress, srcAmount + t2.bitcoins); // + instead of -
-					int destAmount = currentUTXO.get(t2.destAddress);
-					currentUTXO.set(t2.destAddress, destAmount - t2.bitcoins); // - instead of +
+					undoUpdateUTXO(t2, currentUTXO);
 				}
 				return false;
 			}
@@ -369,15 +378,15 @@ public class CachedBlockchain {
 	}
 	
 	// POST CONDITION: acceptedTransaction is modified to reflect the forkedUTXO.
-	// To restore it, use the restoreUTXO method
-	private TempForkData computeForkedUTXO(int blockID) {
+	// To restore accepted transactions, use the restoreTransactions method
+	private TempForkData computeForkedUTXO(int forkHeadID) {
 		
 		// The height of the block is lower or equal than the head. From the head, go back until you reach
 		// the same height, then go backwards until you find the common parent, from which the fork was originated 
 		// At this point, compute the UTXO of the shorter branch
 		
 		
-		Block forkEnd = blockchain.get(blockID);
+		Block forkEnd = blockchain.get(forkHeadID);
 		Block tmpBlock = head;
 		
 		@SuppressWarnings("unchecked")
@@ -389,16 +398,19 @@ public class CachedBlockchain {
 			
 			// UNDO CHANGES!
 			for(Transaction t : tmpBlock.transactions) {
-				int srcAmount = forkedUTXO.get(t.srcAddress);
-				forkedUTXO.set(t.srcAddress, srcAmount + t.bitcoins); // + instead of -
-			
-				int destAmount = forkedUTXO.get(t.destAddress);
-				forkedUTXO.set(t.destAddress, destAmount - t.bitcoins); // - instead of +
 				
+				undoUpdateUTXO(t, forkedUTXO);
+					
 				acceptedTransactions.remove(t.transID);
 				
 			}
-				tmpBlock = blockchain.get(tmpBlock.prevBlockID);
+			
+			// Undo reward 
+			if(tmpBlock.minerID != -1)
+				forkedUTXO.set(tmpBlock.minerID, forkedUTXO.get(tmpBlock.minerID) - tmpBlock.extraReward);
+			
+			
+			tmpBlock = blockchain.get(tmpBlock.prevBlockID);
 		}
 	
 		// I have reached the same height, go back until you find the father
@@ -408,20 +420,21 @@ public class CachedBlockchain {
 		while(tmpBlock.blockID != tmpFork.blockID) {
 			// UNDO CHANGES!
 			for(Transaction t : tmpBlock.transactions) {
-				int srcAmount = forkedUTXO.get(t.srcAddress);
-				forkedUTXO.set(t.srcAddress, srcAmount + t.bitcoins); // + instead of -
-			
-				int destAmount = forkedUTXO.get(t.destAddress);
-				forkedUTXO.set(t.destAddress, destAmount - t.bitcoins); // - instead of +
+				
+				undoUpdateUTXO(t, forkedUTXO);
 				
 				acceptedTransactions.remove(t.transID);
 				
 			}
+
+			// Undo reward 
+			if(tmpBlock.minerID != -1)
+				forkedUTXO.set(tmpBlock.minerID, forkedUTXO.get(tmpBlock.minerID) - tmpBlock.extraReward);
 			
 			visitedBlocksInForkedBranch.add(tmpFork);
 			tmpFork = blockchain.get(tmpFork.prevBlockID);
 			tmpBlock = blockchain.get(tmpBlock.prevBlockID);
-			
+						
 		}
 		
 		assert tmpBlock.blockID == tmpFork.blockID;
@@ -431,16 +444,19 @@ public class CachedBlockchain {
 		// Now we have discovered the point where the fork was created
 		for(int i = visitedBlocksInForkedBranch.size() - 1; i >= 0; i--) {
 			// The last added is the first in the forked blockchain branch
-			for(Transaction t : visitedBlocksInForkedBranch.remove(i).transactions) {
-				int srcAmount = forkedUTXO.get(t.srcAddress);
-				forkedUTXO.set(t.srcAddress, srcAmount - t.bitcoins);
-			
-				int destAmount = forkedUTXO.get(t.destAddress);
-				forkedUTXO.set(t.destAddress, destAmount + t.bitcoins);
+			Block visitedBlock = visitedBlocksInForkedBranch.remove(i);
+			for(Transaction t : visitedBlock.transactions) {
 				
+				updateUTXO(t, forkedUTXO);
+					
 				acceptedTransactions.add(t.transID);
 
 			}
+			
+			// Assign reward 
+			if(visitedBlock.minerID != -1)
+				forkedUTXO.set(visitedBlock.minerID, forkedUTXO.get(visitedBlock.minerID) + visitedBlock.extraReward);
+
 		}
 		
 		/* DEBUG: CHECK THAT ALL NODES HAVE AN AMOUNT OF BITCOIN >= 0, otherwise you have done smth wrong */
@@ -454,6 +470,21 @@ public class CachedBlockchain {
 		return new TempForkData(forkedUTXO, forkEnd, bifurcationID);				
 	}
 
+	private void updateUTXO(Transaction t, ArrayList<Integer> currentUTXO) {
+		int srcAmount = currentUTXO.get(t.srcAddress);
+		currentUTXO.set(t.srcAddress, srcAmount - t.bitcoins);
+		int destAmount = currentUTXO.get(t.destAddress);
+		currentUTXO.set(t.destAddress, destAmount + t.bitcoins);
+	}
+	
+	private void undoUpdateUTXO(Transaction t, ArrayList<Integer> currentUTXO) {
+		int srcAmount = currentUTXO.get(t.srcAddress);
+		currentUTXO.set(t.srcAddress, srcAmount + t.bitcoins); // + instead of -
+		int destAmount = currentUTXO.get(t.destAddress);
+		currentUTXO.set(t.destAddress, destAmount - t.bitcoins); // - instead of +
+	}
+	
+	
 	@SuppressWarnings("unchecked")
 	private void cleanupMemoryPool(Block block) {
 		// Remember that tempUTXO is an helper structure for the memPool
@@ -544,13 +575,13 @@ public class CachedBlockchain {
 		return true;
 	}
 
-	private String longestPathToJSON() {
+	public String longestPathToJSON(Block start) {
 		String res = "{ blockchain: [";
 		Block curr = null;
-		if(head != null) {
+		if(start != null) {
 			do {
 				if(curr == null)
-					curr = head;
+					curr = start;
 				else
 					curr = blockchain.get(curr.prevBlockID);
 				
