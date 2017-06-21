@@ -19,6 +19,8 @@ public class CachedBlockchain {
 	 * - discard inconsistencies
 	 */
 	
+	public long nodeID = -1;
+	
 	private Block head;
 	
 	private HashMap<Integer, Block> blockchain; // This blockchain represents the UTXO if we want, we have only output transactions!
@@ -249,6 +251,7 @@ public class CachedBlockchain {
 					cleanupMemoryPool(block);
 			
 				}else {
+					System.err.println("Block " + block.blockID + " has been refused. This should not happen");
 					//refusedBlockIDs.add(block.blockID);
 					return false;
 				}

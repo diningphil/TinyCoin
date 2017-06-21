@@ -34,6 +34,10 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 
 	@Override
 	public void nextCycle(Node node, int pid) {	
+		
+		if(localBlockchain.nodeID == -1)
+			localBlockchain.nodeID = node.getID();
+		
 		int val = (int) (SharedInfo.random.nextFloat()*100);
 		if (val < SharedInfo.transGenerationThreshold) {
 			broadcastNewTransaction(node, pid);
