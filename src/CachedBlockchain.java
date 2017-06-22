@@ -22,7 +22,7 @@ public class CachedBlockchain {
 
 	// NOTICE: by default this structure doesn't contain input transactions. It serves debugging purposes, as well as performing some block ID's check
 	private HashMap<Integer, Block> blockchain; // It represents the UTXO if we want, we have only output transactions
-	private Block head;
+	public Block head;
 	private ArrayList<Integer> UTXO; // bitcoin address --> amount of bitcoins in the blockchain (considering the longest chain)
 
 	private TreeSet<Integer> acceptedTransactions; // Those added to the longest path in the block chain
@@ -38,21 +38,26 @@ public class CachedBlockchain {
 	@SuppressWarnings("unchecked")
 	public CachedBlockchain() {
 		blockchain = new HashMap<>();
-
-		//receivedBlockIDs = new TreeSet<>();
-		//refusedBlockIDs = new TreeSet<>();
-		//waitingBlockIDs = new TreeSet<>();
-
 		acceptedTransactions = new TreeSet<>();
 		UTXO = new ArrayList<>(Network.size());
 			for(int i = 0; i < Network.size(); i++)
 				UTXO.add(i, 0);;
-
 		tempUTXO = (ArrayList<Integer>) UTXO.clone();
 		memPoolOfTransactions = new HashMap<>();
 		orderedTransactionsInPool = new ArrayList<>();
-
 		waitingBlocks = new HashMap<>();
+
+	}
+
+	@SuppressWarnings("unchecked")
+	public CachedBlockchain(CachedBlockchain cachedBlockchain) {
+		blockchain = (HashMap<Integer, Block>) cachedBlockchain.blockchain.clone();
+		acceptedTransactions = (TreeSet<Integer>) cachedBlockchain.acceptedTransactions.clone();
+		UTXO = (ArrayList<Integer>) cachedBlockchain.UTXO.clone();
+		tempUTXO = (ArrayList<Integer>) cachedBlockchain.tempUTXO.clone();
+		memPoolOfTransactions = (HashMap<Integer, Transaction>) cachedBlockchain.memPoolOfTransactions.clone();
+		orderedTransactionsInPool = (ArrayList<Integer>) cachedBlockchain.orderedTransactionsInPool.clone();
+		waitingBlocks = (HashMap<Integer, ArrayList<Block>>) cachedBlockchain.waitingBlocks.clone();
 	}
 
 	public Transaction buildTransaction(long nodeID) { // use tempUTXO since
@@ -80,7 +85,7 @@ public class CachedBlockchain {
 
 	public Block mineBlock(long nodeID) {
 
-		Block block = buildBlock(nodeID); // pass the minerID
+		Block block = buildBlock(nodeID);
 
 		if(block != null) {
 			return block;
@@ -88,7 +93,7 @@ public class CachedBlockchain {
 		return null;
 	}
 
-	private Block buildBlock(long nodeID) {
+	private Block buildBlock(long minerID) {
 
 		/*
 		Quindi devo assicurarmi solamente che il blocco sia valido nel
@@ -99,7 +104,7 @@ public class CachedBlockchain {
 		*/
 
 		// CAST TO INT! We won't never have a billion nodes in the simulation :)
-		Block b = new Block((int) nodeID, head.blockID);
+		Block b = new Block((int) minerID, head.blockID);
 
 		@SuppressWarnings("unchecked")
 		ArrayList<Integer> helperUTXO = (ArrayList<Integer>) UTXO.clone(); // FIXED COST
@@ -307,7 +312,7 @@ public class CachedBlockchain {
 
 		// Assign reward to miner
 		if(block.minerID != -1)
-			currentUTXO.set(block.minerID, currentUTXO.get(block.minerID) + block.extraReward);
+			currentUTXO.set(block.minerID, currentUTXO.get(block.minerID) + SharedInfo.blockReward + block.extraReward);
 
 		return true;
 	}
@@ -370,7 +375,7 @@ public class CachedBlockchain {
 
 			// Undo reward
 			if(tmpBlock.minerID != -1)
-				forkedUTXO.set(tmpBlock.minerID, forkedUTXO.get(tmpBlock.minerID) - tmpBlock.extraReward);
+				forkedUTXO.set(tmpBlock.minerID, forkedUTXO.get(tmpBlock.minerID) - SharedInfo.blockReward - tmpBlock.extraReward);
 
 
 			tmpBlock = blockchain.get(tmpBlock.prevBlockID);
@@ -392,7 +397,7 @@ public class CachedBlockchain {
 
 			// Undo reward
 			if(tmpBlock.minerID != -1)
-				forkedUTXO.set(tmpBlock.minerID, forkedUTXO.get(tmpBlock.minerID) - tmpBlock.extraReward);
+				forkedUTXO.set(tmpBlock.minerID, forkedUTXO.get(tmpBlock.minerID) - SharedInfo.blockReward - tmpBlock.extraReward);
 
 			visitedBlocksInForkedBranch.add(tmpFork);
 			tmpFork = blockchain.get(tmpFork.prevBlockID);
@@ -418,7 +423,7 @@ public class CachedBlockchain {
 
 			// Assign reward
 			if(visitedBlock.minerID != -1)
-				forkedUTXO.set(visitedBlock.minerID, forkedUTXO.get(visitedBlock.minerID) + visitedBlock.extraReward);
+				forkedUTXO.set(visitedBlock.minerID, forkedUTXO.get(visitedBlock.minerID) + SharedInfo.blockReward + visitedBlock.extraReward);
 
 		}
 

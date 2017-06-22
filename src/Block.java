@@ -59,4 +59,16 @@ public class Block {
 		}		
 		return res + "]";
 	}
+
+	@Override
+	public Object clone() {
+		Block b = new Block(minerID, prevBlockID);
+		b.extraReward = extraReward;
+		b.extraLatency = extraLatency;
+		b.height = height;
+		b.transactions = (ArrayList<Transaction>) transactions.clone();
+
+		return b;
+	}
+
 }

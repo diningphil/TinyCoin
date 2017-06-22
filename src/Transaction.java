@@ -27,6 +27,11 @@ public class Transaction implements Comparable<Transaction>{
 	}
 
 	@Override
+	public Object clone() {
+		return new Transaction(transID, bitcoins, srcAddress, destAddress);
+	}
+
+	@Override
 	public int compareTo(Transaction t) {
 		return (transID - t.transID);
 	}

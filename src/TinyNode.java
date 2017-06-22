@@ -6,6 +6,7 @@ import peersim.core.Node;
 import peersim.edsim.EDProtocol;
 import peersim.edsim.EDSimulator;
 import peersim.transport.Transport;
+import peersim.core.CommonState;
 import peersim.vector.SingleValueHolder;
 
 public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtocol, Linkable {
@@ -14,7 +15,10 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 	private int nodeType;
 	boolean isSelfish;
 
-	public CachedBlockchain localBlockchain;
+	public CachedBlockchain publicBlockchain;
+	public CachedBlockchain privateBlockchain;
+	public int privateBranchLen = 0;
+	public ArrayList<Block> blocksToKeep;
 
 	public TinyNode(String prefix) { 
 		super(prefix);
@@ -25,20 +29,30 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 	 * copies of the objects. To generate a new average protocol,
 	 * peersim will call this clone method.
 	 */
-	public Object clone() // Questo metodo è più importante di una brillante carriera in CS...
+	public Object clone()
 	{
 		TinyNode af = null;
 		af = (TinyNode) super.clone();
 		af.neighbours = new ArrayList<Node>();
-		af.localBlockchain = new CachedBlockchain(); 
+		af.publicBlockchain = new CachedBlockchain();
+
+		/** SELFISH MINING FIELDS **/
+		af.privateBlockchain = new CachedBlockchain();
+		af.isSelfish = false;
+		af.privateBranchLen = 0;
+		af.blocksToKeep = new ArrayList<>();
+
 		return af;
 	}
 
 	@Override
 	public void nextCycle(Node node, int pid) {	
 		
-		if(localBlockchain.nodeID == -1)
-			localBlockchain.nodeID = node.getID();
+		if(publicBlockchain.nodeID == -1) {
+			publicBlockchain.nodeID = node.getID();
+			privateBlockchain.nodeID = node.getID();
+		}
+
 		
 		int val = (int) (SharedInfo.random.nextFloat()*100);
 		if (val < SharedInfo.transGenerationThreshold) {
@@ -48,17 +62,25 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 	
 	private void broadcastNewTransaction(Node node, int pid) {
 		long nodeID = node.getID();
-		
-		// Pick a random amount of bitcoins (from UTXO) > 0
-		// Create a transaction ( choose a dest node at random )
-		Transaction t = localBlockchain.buildTransaction(nodeID);
-	
-		if(t != null) { // Node has > 0 BTCs
-			// update your UTXO (use receivedTransaction)
-			localBlockchain.receiveTransaction(t);
-			
-			// Broadcast the block
-			broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.TRANSACTION, t, node.getID()));			
+
+		if(!isSelfish) {
+			// Pick a random amount of bitcoins (from UTXO) > 0
+			// Create a transaction ( choose a dest node at random )
+			Transaction t = publicBlockchain.buildTransaction(nodeID);
+
+			if (t != null) { // Node has > 0 BTCs
+				// update your UTXO (use receivedTransaction)
+				publicBlockchain.receiveTransaction(t);
+
+				// Broadcast the block
+				broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.TRANSACTION, t, node.getID()));
+			}
+		}
+		else {
+
+			// TODO cosa fare se sono selfish e ricevo transazioni? Costruisco una che mi interessa!
+			// TODO CONTROLLA PER BENE cosa devo fare se ricevo una transazione. E' importante definire un comportamento
+
 		}
 	}
 
@@ -94,16 +116,34 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		
 		// If it is MINED message
 		if(msg.type == TinyCoinMessage.MINED) {
-			
-			Block block = localBlockchain.mineBlock(nodeID);
-		
-			if (block != null) { // There were transactions to mine	
-				// Broadcast the block
-				System.out.println("Broadcasting MINED block " + block.blockID);
-				broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, block, node.getID()));
-			}// else {
-				//System.out.println("NULL BLOCK => no transactions to mine. It may happen when I have received a block very few time ago, check if data structure is empty");
-			//}
+
+			/** SELFISH MINING **/
+			if(isSelfish) {
+
+				int deltaPrev = privateBlockchain.head.height - publicBlockchain.head.height;
+				Block block = privateBlockchain.mineBlock(nodeID);
+
+				if(block != null) {
+					blocksToKeep.add(block);
+					privateBranchLen++;
+					if (deltaPrev == 0 && privateBranchLen == 2) {
+						privateBranchLen = 0;
+						// BROADCASTS ALL PRIVATE NODES
+						for (Block b : blocksToKeep)
+							broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, b, node.getID()));
+						blocksToKeep.clear();
+					}
+				}
+			/** HONEST MINING **/
+			} else {
+				Block block = publicBlockchain.mineBlock(nodeID);
+
+				if (block != null) { // There were transactions to mine ( In the case of SELFISH mining, I have decided to broadcast )
+					// Broadcast the block
+					System.out.println("Broadcasting MINED block " + block.blockID + " isSelfish = " + isSelfish);
+					broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, block, node.getID()));
+				}
+			}
 		} else {
 			normalHandle(node, pid, msg);
 		}
@@ -117,16 +157,62 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		
 		if(msg.type == TinyCoinMessage.TRANSACTION) {
 			Transaction t = (Transaction) msg.message;
-			
-			if(localBlockchain.receiveTransaction(t))
+
+			boolean broadcast = false;
+			if(publicBlockchain.receiveTransaction(t))
+				broadcast = true;
+			if(privateBlockchain.receiveTransaction(t))
+				broadcast = true;
+
+			if(broadcast)
 				broadcastMessage(node, pid, msg);
 		}
 		// If it is a Block, append it to the blockchain (execute algorithm) AND not received yet
 		// (Notice: if its father has not been received, keep it in a local cache)
 		else if (msg.type == TinyCoinMessage.BLOCK) {
-			if(receiveBlock((Block)msg.message)) {
-				//System.out.println("Node " + node.getID() + " added new BLOCK "+ ((Block)msg.message).blockID  +"at time " + CommonState.getTime());
-				broadcastMessage(node, pid, msg);
+
+			Block b = (Block) msg.message;
+
+			/** SELFISH MINING **/
+			if(isSelfish) {
+				if(b.blockID == -1) { // GENESIS BLOCK
+					publicBlockchain.receiveBlock(b);
+					privateBlockchain.receiveBlock(b);
+					return;
+				}
+
+				int deltaPrev = privateBlockchain.head.height - publicBlockchain.head.height;
+
+				if(receiveBlock(b, publicBlockchain)) {
+					if(deltaPrev == 0) {
+						privateBlockchain = new CachedBlockchain(publicBlockchain);
+						privateBranchLen = 0;
+					}
+					else if (deltaPrev == 1) {
+						// Publish last block of private chain
+						assert blocksToKeep.size() == 1;
+						for (Block privateBlock : blocksToKeep)
+							broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, privateBlock, node.getID()));
+					}
+					else if (deltaPrev == 2) {
+						// Publish all of the private chain
+						assert blocksToKeep.size() == 2;
+						for (Block privateBlock : blocksToKeep)
+							broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, privateBlock, node.getID()));
+					}
+					else {
+						assert blocksToKeep.size() > 2;
+						// Publish first unpublished block
+						broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, blocksToKeep.remove(0), node.getID()));
+					}
+				}
+
+			/** HONEST MINING **/
+			} else {
+				if(receiveBlock(b, publicBlockchain)) {
+					System.out.println("Node " + node.getID() + " added new BLOCK "+ ((Block)msg.message).blockID  +"at time " + CommonState.getTime());
+					broadcastMessage(node, pid, msg);
+				}
 			}
 		}
 		
@@ -146,8 +232,8 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 	}
 
 
-	public boolean receiveBlock(Block block) {
-		return localBlockchain.receiveBlock(block);	
+	public boolean receiveBlock(Block block, CachedBlockchain blockchain) {
+		return blockchain.receiveBlock(block);
 	}
 
 
