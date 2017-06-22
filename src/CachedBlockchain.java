@@ -51,12 +51,20 @@ public class CachedBlockchain {
 
 	@SuppressWarnings("unchecked")
 	public CachedBlockchain(CachedBlockchain cachedBlockchain) {
+
+
 		blockchain = (HashMap<Integer, Block>) cachedBlockchain.blockchain.clone();
+
+
+		NON VA BENE CON ARRAYLIST E TREESET DEVO CLONARE ELEMENTO PER ELEMENTO, gli altri posso copiare solo le mappe chiavi valore perchè i valori non vengono modificati
+
 		acceptedTransactions = (TreeSet<Integer>) cachedBlockchain.acceptedTransactions.clone();
 		UTXO = (ArrayList<Integer>) cachedBlockchain.UTXO.clone();
 		tempUTXO = (ArrayList<Integer>) cachedBlockchain.tempUTXO.clone();
-		memPoolOfTransactions = (HashMap<Integer, Transaction>) cachedBlockchain.memPoolOfTransactions.clone();
 		orderedTransactionsInPool = (ArrayList<Integer>) cachedBlockchain.orderedTransactionsInPool.clone();
+
+
+		memPoolOfTransactions = (HashMap<Integer, Transaction>) cachedBlockchain.memPoolOfTransactions.clone();
 		waitingBlocks = (HashMap<Integer, ArrayList<Block>>) cachedBlockchain.waitingBlocks.clone();
 	}
 

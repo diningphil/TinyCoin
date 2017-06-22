@@ -72,15 +72,32 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 				// update your UTXO (use receivedTransaction)
 				publicBlockchain.receiveTransaction(t);
 
+				//TODO CONTROLLA
+				privateBlockchain.receiveTransaction(t);
+
 				// Broadcast the block
 				broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.TRANSACTION, t, node.getID()));
+
 			}
 		}
 		else {
 
 			// TODO cosa fare se sono selfish e ricevo transazioni? Costruisco una che mi interessa!
 			// TODO CONTROLLA PER BENE cosa devo fare se ricevo una transazione. E' importante definire un comportamento
+			// Per ora facciamo così
 
+			Transaction t = privateBlockchain.buildTransaction(nodeID);
+
+			if (t != null) { // Node has > 0 BTCs
+				// update your UTXO (use receivedTransaction)
+				privateBlockchain.receiveTransaction(t);
+
+				// TODO I'm not sure it will be accepted! CONSEQUENTLY SOME BLOCKS MAY BE REFUSED BY PUBLIC BLOCKCHAINS!
+				publicBlockchain.receiveTransaction(t);
+
+				// Broadcast the block
+				broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.TRANSACTION, t, node.getID()));
+			}
 		}
 	}
 
@@ -129,6 +146,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 					if (deltaPrev == 0 && privateBranchLen == 2) {
 						privateBranchLen = 0;
 						// BROADCASTS ALL PRIVATE NODES
+
 						for (Block b : blocksToKeep)
 							broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, b, node.getID()));
 						blocksToKeep.clear();
@@ -143,6 +161,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 					System.out.println("Broadcasting MINED block " + block.blockID + " isSelfish = " + isSelfish);
 					broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, block, node.getID()));
 				}
+
 			}
 		} else {
 			normalHandle(node, pid, msg);
