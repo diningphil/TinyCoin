@@ -1,0 +1,33 @@
+isBlockValid method
+		 /** Tieniti una copia di UTXO che non viene modificata
+		 * e che serve solo per quando aggiungi un blocco. Per controllare se è valido, puoi evitare computeUTXO.
+		 * Al più duplichi solo la struttura per quando devi ricominciare a lavorare sulle transazioni
+		 *
+		 il fatto è che ho mischiato la mempool con la UTXO. Mantenendo una copia dei bitcoin che riflette la blockchain
+		 e una che riflette lo stato locale delle transazioni, rappresento meglio il discorso di togliere un input
+		 dalla mempool!
+		 */
+
+
+Receive transaction method:
+
+
+		// STOP BROADCASTING. Se non c'è nel memory pool possono essere successe 2 cose:
+		// o ho minato un blocco (che però potrebbe non essere stato confermato)
+		// oppure non l'ho ricevuta
+		// Se io la togliessi solo quando viene AGGIUNTO il blocco, allora sarei sicuro. SE IL BLOCCO DIVENTA ORFANO LA TRANSAZIONE IN BITCOIN VA RIFATTA, MI VA BENE.
+		// se io all'istante t devo minare un blocco e la seleziono, e nello stesso istante ricevo un blocco e lei viene confermata,
+		// allora rischio (non avendo output(h,i) di fare confusione e far spendere 2 volte la stessa
+		// quantità all'utente. Nel caso la transazione arrivi dopo che ho minato 6 blocchi (impossibile) a quel punto sarebbe un altro problema
+		// visto che nel progetto il nodo sceglie i nodi quando gli viene chiesto di minare,
+		// a parte il caso limite non potrà scegliere mai una transazione confermata!
+
+		// SOLVED: un problema è quindi quello che liberare la mem pool significa uccidere anche le transazioni già ricevute. Però alcune di esse dopo l'AGGIUNTA di un blocco
+		// potrebbero non essere più valide, e dovrei controllarlo. Però in questo modo una transazione ancora valida non viene persa potenzialmente da tutti.
+		// A QUESTO PUNTO, SE MI TENGO GLI ID DELLE TRANSAZIONI GIA' RICEVUTE, TOGLIENDO QUELLE CHE HO AGGIUNTO NELLA BLOCKCHAIN, SO QUALI DEVO MANTENERE E EVITO IL CASO LIMITE.
+		// PERO' RIGUARDA ALGORITMI DOVE SI PARLA DELLA MEMPOOL ANCHE. CHE SI INTENDE PER CLEAR? :) :) FORSE SI INTENDONO PROPRIO QUESTI ULTIMI DISCORSI
+		// Questo nasce dal fatto che un miner inizia a minare le transazioni che ha, e quelle che riceve dopo amen.
+		// Dopo tutto, la UTXO reale contiene transazioni di output, quindi pure il loro id
+		// C'è anche il caso in cui io aggiungo un blocco con una transazione. Se poi quella transazione è stata aggiunta alla blockchain, me lo devo ricordare!!
+		// Altrimenti rischio di ricevere un blocco (o elaborare un blocco che stava aspettando il padre) e posso riaggiungere la stessa transazione!
+

@@ -12,7 +12,9 @@ public class TinyCoinInitialiser implements NodeInitializer, Control {
 	 * "pid" will contains the value of the protocol referenced.
 	 */
 	private static final String PAR_PROT = "protocol";
-	int pid = 0;
+	private int pid = 0;
+
+	private int selfishAssigned = 0;
 	
 	public TinyCoinInitialiser(String prefix) {
 		pid = Configuration.getPid(prefix + "." + PAR_PROT);	
@@ -24,6 +26,7 @@ public class TinyCoinInitialiser implements NodeInitializer, Control {
 		long nodeID = node.getID();
 			
 		int normal_or_miner = (int) (SharedInfo.random.nextFloat()*100);
+
 		SharedInfo sI = SharedInfo.getSharedInfo();
 	
 		sI.idToNode.put(nodeID, node);
@@ -39,24 +42,29 @@ public class TinyCoinInitialiser implements NodeInitializer, Control {
 				sI.cpus.add(nodeID);
 				sI.miners.put(nodeID, SharedInfo.CPU_MINER);
 				tinyProtocol.setType(SharedInfo.CPU_MINER);
-				
-			} else if (value <= SharedInfo.gpu) {
-				// create a gpu miner
-				sI.gpus.add(nodeID);
-				sI.miners.put(nodeID, SharedInfo.GPU_MINER);
-				tinyProtocol.setType(SharedInfo.GPU_MINER);
-			
-			} else if (value <= SharedInfo.fpga) {
-				// create a fpga miner
-				sI.fpgas.add(nodeID);
-				sI.miners.put(nodeID, SharedInfo.FPGA_MINER);
-				tinyProtocol.setType(SharedInfo.FPGA_MINER);
-			
+
 			} else {
-				// create an asic miner
-				sI.asics.add(nodeID);
-				sI.miners.put(nodeID, SharedInfo.ASIC_MINER);
-				tinyProtocol.setType(SharedInfo.ASIC_MINER);
+				int selfish = (int) (SharedInfo.random.nextFloat()*100);
+				if(selfish < SharedInfo.prob_selfish && selfishAssigned < SharedInfo.max_selfishMiners) { tinyProtocol.setSelfish(true); selfishAssigned++; }
+
+				if (value <= SharedInfo.gpu) {
+					// create a gpu miner
+					sI.gpus.add(nodeID);
+					sI.miners.put(nodeID, SharedInfo.GPU_MINER);
+					tinyProtocol.setType(SharedInfo.GPU_MINER);
+
+				} else if (value <= SharedInfo.fpga) {
+					// create a fpga miner
+					sI.fpgas.add(nodeID);
+					sI.miners.put(nodeID, SharedInfo.FPGA_MINER);
+					tinyProtocol.setType(SharedInfo.FPGA_MINER);
+
+				} else {
+					// create an asic miner
+					sI.asics.add(nodeID);
+					sI.miners.put(nodeID, SharedInfo.ASIC_MINER);
+					tinyProtocol.setType(SharedInfo.ASIC_MINER);
+				}
 			}
 		}	
 	}

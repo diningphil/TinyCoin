@@ -12,6 +12,8 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 
 	private ArrayList<Node> neighbours;
 	private int nodeType;
+	boolean isSelfish;
+
 	public CachedBlockchain localBlockchain;
 
 	public TinyNode(String prefix) { 
@@ -196,8 +198,6 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		System.out.println("Average.pack() -- not implemented");
 	}
 
-	public void setType(int type) {
-		this.nodeType = type;
-		
-	}
+	public void setType(int type) { this.nodeType = type; }
+	public void setSelfish(boolean isSelfish) { this.isSelfish = isSelfish; }
 }

@@ -45,7 +45,11 @@ public class SharedInfo {
     						gpu = Configuration.getInt("PROB_GPU"),
     						fpga = Configuration.getInt("PROB_FPGA"),
     						asic = Configuration.getInt("PROB_ASIC");
-    
+
+    // Probability for a miner to be selfish
+    public static final int prob_selfish = Configuration.getInt("PROB_SELFISH"),
+                            max_selfishMiners = Configuration.getInt("MAX_SELFISH");
+
     // Probability to CHOOSE one type of miner
     public static final int cpuPower = Configuration.getInt("PROB_CPU_POWER"),
 			gpuPower = Configuration.getInt("PROB_GPU_POWER"),
