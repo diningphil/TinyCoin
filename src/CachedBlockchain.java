@@ -56,7 +56,7 @@ public class CachedBlockchain {
 		blockchain = (HashMap<Integer, Block>) cachedBlockchain.blockchain.clone();
 
 
-		NON VA BENE CON ARRAYLIST E TREESET DEVO CLONARE ELEMENTO PER ELEMENTO, gli altri posso copiare solo le mappe chiavi valore perchè i valori non vengono modificati
+		// TODO  NON VA BENE CON ARRAYLIST E TREESET DEVO CLONARE ELEMENTO PER ELEMENTO, gli altri posso copiare solo le mappe chiavi valore perchè i valori non vengono modificati
 
 		acceptedTransactions = (TreeSet<Integer>) cachedBlockchain.acceptedTransactions.clone();
 		UTXO = (ArrayList<Integer>) cachedBlockchain.UTXO.clone();
@@ -95,10 +95,8 @@ public class CachedBlockchain {
 
 		Block block = buildBlock(nodeID);
 
-		if(block != null) {
-			return block;
-		}
-		return null;
+		// Can be null
+		return block;
 	}
 
 	private Block buildBlock(long minerID) {
@@ -303,7 +301,7 @@ public class CachedBlockchain {
 				//!confirmedTransactions.contains(t.transID)
 
 				accepted.add(t);
-				// Modify the temporary UTXO (needed for creation of the block)
+				// Modify the current UTXO (needed for creation of the block)
 				updateUTXO(t, currentUTXO);
 
 			}else {
@@ -463,6 +461,8 @@ public class CachedBlockchain {
 
 	@SuppressWarnings("unchecked")
 	private void cleanupMemoryPool(Block block) {
+
+		tempUTXO = (ArrayList<Integer>) UTXO.clone();
 
 		for(Transaction t: block.transactions) {
 			if(memPoolOfTransactions.containsKey(t.transID)) {

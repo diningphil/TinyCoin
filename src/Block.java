@@ -21,7 +21,7 @@ public class Block {
 	public int minerID;
 	public int extraReward, extraLatency;
 	public int height;
-	
+
 	//public HashMap<Long,Transaction> inputTransactions;
 	//public HashMap<Long,Transaction> outputTransactions;
 	public ArrayList<Transaction> transactions;
