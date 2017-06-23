@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
   <component name="EclipseModuleManager">
-    <libelement value="jar://$MODULE_DIR$/djep-1.0.0.jar!/" />
-    <libelement value="jar://$MODULE_DIR$/jep-2.3.0.jar!/" />
-    <libelement value="jar://$MODULE_DIR$/peersim-1.0.5.jar!/" />
-    <libelement value="jar://$MODULE_DIR$/peersim-doclet.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/libs/djep-1.0.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/libs/jep-2.3.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/libs/peersim-1.0.5.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/libs/peersim-doclet.jar!/" />
     <src_description expected_position="0">
       <src_folder value="file://$MODULE_DIR$/src" expected_position="0" />
     </src_description>
@@ -20,7 +20,7 @@
     <orderEntry type="module-library">
       <library name="djep-1.0.0.jar">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/djep-1.0.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/libs/djep-1.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -29,7 +29,7 @@
     <orderEntry type="module-library">
       <library name="jep-2.3.0.jar">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/jep-2.3.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/libs/jep-2.3.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -38,16 +38,18 @@
     <orderEntry type="module-library">
       <library name="peersim-1.0.5.jar">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/peersim-1.0.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/libs/peersim-1.0.5.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="file://$USER_HOME$/MEGA/Master_Degree/Sistemi_Peer_to_Peer/peersim-1.0.5" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library name="peersim-doclet.jar">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/peersim-doclet.jar!/" />
+          <root url="jar://$MODULE_DIR$/libs/peersim-doclet.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

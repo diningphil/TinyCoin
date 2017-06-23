@@ -71,7 +71,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 				// update your UTXO (use receivedTransaction)
 				publicBlockchain.receiveTransaction(t);
 
-				//TODO CONTROLLA
+				//TODO CONTROLLA se va fatto
 				privateBlockchain.receiveTransaction(t);
 
 				// Broadcast the block
@@ -146,9 +146,14 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 						privateBranchLen = 0;
 						// BROADCASTS ALL PRIVATE NODES
 
+						System.err.println("Selfish miner " + nodeID + " broadcasting all private blocks ");
+
 						for (Block b : blocksToKeep)
 							broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, b, node.getID()));
 						blocksToKeep.clear();
+					}
+					else {
+						System.err.println("Selfish miner " + nodeID + " hiding block " + block.blockID);
 					}
 				}
 			/** HONEST MINING **/
@@ -210,18 +215,25 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 					else if (deltaPrev == 1) {
 						// Publish last block of private chain
 						assert blocksToKeep.size() == 1;
+
+						System.err.println("Selfish miner publishing last block of private chain");
+
 						for (Block privateBlock : blocksToKeep)
 							broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, privateBlock, node.getID()));
 					}
 					else if (deltaPrev == 2) {
 						// Publish all of the private chain
+
 						assert blocksToKeep.size() == 2;
+
+						System.err.println("Selfish miner publishing all the private blocks (2)");
 						for (Block privateBlock : blocksToKeep)
 							broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, privateBlock, node.getID()));
 					}
 					else {
 						assert blocksToKeep.size() > 2;
 						// Publish first unpublished block
+						System.err.println("Selfish miner publishing first unpublished block");
 						broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, blocksToKeep.remove(0), node.getID()));
 					}
 				}

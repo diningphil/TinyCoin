@@ -52,18 +52,25 @@ public class CachedBlockchain {
 	@SuppressWarnings("unchecked")
 	public CachedBlockchain(CachedBlockchain cachedBlockchain) {
 
-
+		// TODO SE DECIDO DI CONFERMARE I BLOCCHI NON POSSO CONDIVIDERNE I PUNTATORI!
 		blockchain = (HashMap<Integer, Block>) cachedBlockchain.blockchain.clone();
+		head = cachedBlockchain.head;
 
+		acceptedTransactions = new TreeSet<>();
+		for(Integer transID : cachedBlockchain.acceptedTransactions)
+			acceptedTransactions.add(transID);
 
-		// TODO  NON VA BENE CON ARRAYLIST E TREESET DEVO CLONARE ELEMENTO PER ELEMENTO, gli altri posso copiare solo le mappe chiavi valore perchè i valori non vengono modificati
+		UTXO = new ArrayList<>();
+		for(int i = 0; i < cachedBlockchain.UTXO.size(); i++)
+			UTXO.add(cachedBlockchain.UTXO.get(i));
+		tempUTXO = new ArrayList<>();
+		for(int i = 0; i < cachedBlockchain.tempUTXO.size(); i++)
+			tempUTXO.add(cachedBlockchain.tempUTXO.get(i));
+		orderedTransactionsInPool = new ArrayList<>();
+		for(int i = 0; i < cachedBlockchain.orderedTransactionsInPool.size(); i++)
+			orderedTransactionsInPool.add(cachedBlockchain.orderedTransactionsInPool.get(i));
 
-		acceptedTransactions = (TreeSet<Integer>) cachedBlockchain.acceptedTransactions.clone();
-		UTXO = (ArrayList<Integer>) cachedBlockchain.UTXO.clone();
-		tempUTXO = (ArrayList<Integer>) cachedBlockchain.tempUTXO.clone();
-		orderedTransactionsInPool = (ArrayList<Integer>) cachedBlockchain.orderedTransactionsInPool.clone();
-
-
+		// posso copiare solo le mappe chiavi valore perchè i valori non vengono modificati
 		memPoolOfTransactions = (HashMap<Integer, Transaction>) cachedBlockchain.memPoolOfTransactions.clone();
 		waitingBlocks = (HashMap<Integer, ArrayList<Block>>) cachedBlockchain.waitingBlocks.clone();
 	}
