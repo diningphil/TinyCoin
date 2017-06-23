@@ -79,7 +79,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 
 			}
 		}
-		/*else {
+		else {
 
 			// TODO cosa fare se sono selfish e ricevo transazioni? Costruisco una che mi interessa!
 			// TODO CONTROLLA PER BENE cosa devo fare se ricevo una transazione. E' importante definire un comportamento
@@ -97,7 +97,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 				// Broadcast the block
 				broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.TRANSACTION, t, node.getID()));
 			}
-		}*/
+		}
 	}
 
 	@Override
@@ -135,7 +135,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 
 			/** SELFISH MINING **/
 			if(isSelfish) {
-				/*
+
 				int deltaPrev = privateBlockchain.head.height - publicBlockchain.head.height;
 				Block block = privateBlockchain.mineBlock(nodeID);
 
@@ -150,7 +150,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 							broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, b, node.getID()));
 						blocksToKeep.clear();
 					}
-				} */
+				}
 			/** HONEST MINING **/
 			} else {
 				Block block = publicBlockchain.mineBlock(nodeID);
@@ -193,7 +193,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 			/** SELFISH MINING **/
 			if(isSelfish) {
 
-				/*
+
 				if(b.blockID == -1) { // GENESIS BLOCK
 					publicBlockchain.receiveBlock(b);
 					privateBlockchain.receiveBlock(b);
@@ -225,7 +225,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 						broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, blocksToKeep.remove(0), node.getID()));
 					}
 				}
-				*/
+
 			/** HONEST MINING **/
 			} else {
 				if(receiveBlock(b, publicBlockchain)) {
