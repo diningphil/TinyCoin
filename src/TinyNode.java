@@ -147,19 +147,21 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 					privateBranchLen++;
 					if (deltaPrev == 0 && privateBranchLen == 2) { // Was tie with branch of 1
 
-						System.err.println("Selfish miner " + nodeID + " broadcasting all private blocks ");
+						System.out.println("Selfish miner " + nodeID + " broadcasting all private blocks ");
 						// BROADCASTS ALL PRIVATE NODES
 
 						for (Block b : blocksToKeep) // Pool wins due to the lead of 1
 							broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, b, node.getID()));
 						blocksToKeep.clear();
 						privateBranchLen = 0;
+					} else {
+						System.out.println("Selfish miner " + nodeID + " hiding block " + block.blockID + " prevID is " + block.prevBlockID + " private head is " + privateBlockchain.head.blockID);
 					}
-					else {
-						System.err.println("Selfish miner " + nodeID + " hiding block " + block.blockID + " prevID is " + block.prevBlockID + " private head is " + privateBlockchain.head.blockID);
-					}
+				} else {
+					System.err.println("Node " + nodeID + ": mining has not produced a block!");
 				}
-			/** HONEST MINING **/
+
+				/** HONEST MINING **/
 			} else {
 				Block block = publicBlockchain.mineBlock(nodeID);
 
@@ -201,55 +203,59 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 			/** SELFISH MINING **/
 			if(isSelfish) {
 
-
 				if(b.blockID == -1) { // GENESIS BLOCK
 					publicBlockchain.receiveBlock(b);
 					privateBlockchain.receiveBlock(b);
 					return;
 				}
 
-				//TODO COSA SUCCEDE SE METTO UN BLOCCO IN WAITING QUEUE?? NON E' ANCORA STATO ACCETTATO! POSSO ASSUMERE CHE SIA STATO MESSO IN CIMA? NO!
+				// COSA SUCCEDE SE METTO UN BLOCCO IN WAITING QUEUE?? NON E' ANCORA STATO ACCETTATO! IL MINER NON LO SA.. AL PIU' IL BLOCCO VERRA' RIFIUTATO DOPO DA UN'ALTRA FORK
+				// PUO' ACCADERE CHE UN ALTRO SELFISH MINER PUBBLICHI UN BLOCCO. SE IO NON NE HO PIU' E' INUTILE CHE LI PUBBLICHI
+
 				int deltaPrev = privateBlockchain.head.height - publicBlockchain.head.height;
 
 				if(receiveBlock(b, publicBlockchain)) {
 
-//TODO				int deltaPrev = privateBlockchain.head.height - publicBlockchain.head.height;
-
-					if(deltaPrev == 0) {
-//TODO				if(deltaPrev < -1) { /** THE PUBLIC CHAIN COULD HAVE ADDED ALSO BLOCKS THAT WERE WAITING! **/
+					if(deltaPrev <= 0) { /** THE PUBLIC CHAIN COULD HAVE ADDED ALSO BLOCKS THAT WERE WAITING! **/
 						// They win
 
 						privateBlockchain = new CachedBlockchain(publicBlockchain);
 						privateBranchLen = 0;
-
 						blocksToKeep.clear();
 					}
-					else if (deltaPrev == 1) {
-//TODO					else if (deltaPrev == -1) { /** SAME LENGHT, try our luck **/
+					else if (deltaPrev == 1) { /** SAME LENGHT, try our luck **/
 						// Publish last block of private chain
 
-						System.err.println("Selfish miner publishing last block of private chain " + blocksToKeep.get(0).blockID);
-						broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, blocksToKeep.remove(0), node.getID()));
+						if(blocksToKeep.size() > 0) {
+							if(blocksToKeep.size() != 1) System.err.println("Should be 1!");
+							System.out.println("Selfish miner publishing last block of private chain " + blocksToKeep.get(0).blockID);
+							broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, blocksToKeep.remove(0), node.getID()));
+
+						}
 					}
 					else if (deltaPrev == 2) {
 						// Publish all of the private chain
 
-						System.err.println("Selfish miner publishing all the private blocks " + blocksToKeep.get(0).blockID + " and " + blocksToKeep.get(1).blockID);
-						for (int i = 0; i < blocksToKeep.size(); i++) {
-							Block privateBlock = blocksToKeep.remove(0);
-							broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, privateBlock, node.getID()));
+						if(blocksToKeep.size() > 0) {
+							if (blocksToKeep.size() != 2) System.err.println("Should be 2!");
+							System.out.println("Selfish miner publishing all the private blocks " + blocksToKeep.get(0).blockID + " and " + blocksToKeep.get(1).blockID);
+							for (int i = 0; i < blocksToKeep.size(); i++) {
+								Block privateBlock = blocksToKeep.remove(0);
+								broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, privateBlock, node.getID()));
+							}
 						}
 
 						privateBranchLen = 0;
 					}
 					else if(deltaPrev > 2){
 						// Publish first unpublished block
-
-						System.err.println("Selfish miner publishing first unpublished block " + blocksToKeep.get(0).blockID);
-						broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, blocksToKeep.remove(0), node.getID()));
+						if (blocksToKeep.size() > 0) {
+							if (blocksToKeep.size() <= 2) System.err.println("Should be > 2!");
+							System.out.println("Selfish miner publishing first unpublished block " + blocksToKeep.get(0).blockID);
+							broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, blocksToKeep.remove(0), node.getID()));
+						}
 					}
 				}
-
 			/** HONEST MINING **/
 			} else {
 				if(receiveBlock(b, publicBlockchain)) {
