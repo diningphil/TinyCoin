@@ -1,0 +1,49 @@
+Selfish miner 53 hiding block 0 prevID is -1 private head is 0
+Honest miner broadcasting MINED block 1 with prev ID -1
+Selfish miner publishing last block of private chain 0
+Selfish miner 122 hiding block 2 prevID is 1 private head is 2
+Honest miner broadcasting MINED block 3 with prev ID 1
+Selfish miner publishing last block of private chain 2
+Honest miner broadcasting MINED block 4 with prev ID 3
+Honest miner broadcasting MINED block 5 with prev ID 4
+Selfish miner 117 hiding block 6 prevID is 5 private head is 6
+Selfish miner 117 hiding block 7 prevID is 6 private head is 7
+Honest miner broadcasting MINED block 8 with prev ID 5
+Selfish miner publishing all the private blocks 6 and 7
+Selfish miner publishing last block of private chain 7
+NODE 389 A forked branch has replaced head 8, head is 7
+NODE 484 A forked branch has replaced head 8, head is 7
+NODE 255 A forked branch has replaced head 8, head is 7
+NODE 437 A forked branch has replaced head 8, head is 7
+NODE 25 A forked branch has replaced head 8, head is 7
+NODE 8 A forked branch has replaced head 8, head is 7
+NODE 209 A forked branch has replaced head 8, head is 7
+NODE 454 A forked branch has replaced head 8, head is 7
+NODE 122 A forked branch has replaced head 8, head is 7
+NODE 106 A forked branch has replaced head 8, head is 7
+NODE 441 A forked branch has replaced head 8, head is 7
+NODE 480 A forked branch has replaced head 8, head is 7
+NODE 496 A forked branch has replaced head 8, head is 7
+NODE 491 A forked branch has replaced head 8, head is 7
+NODE 385 A forked branch has replaced head 8, head is 7
+NODE 449 A forked branch has replaced head 8, head is 7
+NODE 129 A forked branch has replaced head 8, head is 7
+NODE 422 A forked branch has replaced head 8, head is 7
+NODE 198 A forked branch has replaced head 8, head is 7
+NODE 2 A forked branch has replaced head 8, head is 7
+NODE 387 A forked branch has replaced head 8, head is 7
+NODE 139 A forked branch has replaced head 8, head is 7
+NODE 185 A forked branch has replaced head 8, head is 7
+NODE 390 A forked branch has replaced head 8, head is 7
+NODE 37 A forked branch has replaced head 8, head is 7
+NODE 155 A forked branch has replaced head 8, head is 7
+NODE 117 A forked branch has replaced head 8, head is 7
+Exception in thread "main" java.lang.IndexOutOfBoundsException: Index: 0, Size: 0
+	at java.util.ArrayList.rangeCheck(ArrayList.java:653)
+	at java.util.ArrayList.get(ArrayList.java:429)
+	at TinyNode.normalHandle(TinyNode.java:231)
+	at TinyNode.minerHandle(TinyNode.java:173)
+	at TinyNode.processEvent(TinyNode.java:122)
+	at peersim.edsim.EDSimulator.executeNext(EDSimulator.java:315)
+	at peersim.edsim.EDSimulator.nextExperiment(EDSimulator.java:361)
+	at peersim.Simulator.main(Simulator.java:193)
