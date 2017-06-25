@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.TreeSet;
 
@@ -34,6 +35,7 @@ public class CachedBlockchain {
 	private ArrayList<Integer> orderedTransactionsInPool; // FIFO QUEUE
 
 	private HashMap<Integer, ArrayList<Block>> waitingBlocks; // The key corresponds to the blockID that I am waiting for
+	public int numberOfForks;
 
 	@SuppressWarnings("unchecked")
 	public CachedBlockchain() {
@@ -46,15 +48,16 @@ public class CachedBlockchain {
 		memPoolOfTransactions = new HashMap<>();
 		orderedTransactionsInPool = new ArrayList<>();
 		waitingBlocks = new HashMap<>();
-
+		numberOfForks = 0;
 	}
 
 	@SuppressWarnings("unchecked")
 	public CachedBlockchain(CachedBlockchain cachedBlockchain) {
 
-		// TODO SE DECIDO DI CONFERMARE I BLOCCHI NON POSSO CONDIVIDERNE I PUNTATORI!
+		// TODO SE DECIDO DI CONFERMARE I BLOCCHI/TRANSAZIONI NON POSSO CONDIVIDERNE I PUNTATORI!
 		blockchain = (HashMap<Integer, Block>) cachedBlockchain.blockchain.clone();
 		head = cachedBlockchain.head;
+		numberOfForks = cachedBlockchain.numberOfForks;
 
 		acceptedTransactions = new TreeSet<>();
 		for(Integer transID : cachedBlockchain.acceptedTransactions)
@@ -218,6 +221,10 @@ public class CachedBlockchain {
 				// ARGS: the id of my parent in the fork
 				TempForkData tmp = computeForkedUTXO(block.prevBlockID);
 
+				if(isNewFork(tmp)) {
+					numberOfForks++;
+				}
+
 				if(isBlockValid(block, tmp.forkedUTXO)) { // this function recomputes and already updates the UTXO. if the block is not valid, the state is kept consistent
 
 					//receivedBlockIDs.add(block.blockID); // DEBUGGING PURPOSES
@@ -288,6 +295,10 @@ public class CachedBlockchain {
 
 		// If an attacker broadcasts invalid nodes? In theory one should verify the PoW. In this implementation I keep and broadcast the "waiting" block.
 		return true;
+	}
+
+	private boolean isNewFork(TempForkData forkData) {
+		return forkData.bifurcationID == forkData.forkEnd.blockID;
 	}
 
 	private boolean isBlockValid(Block block, ArrayList<Integer> currentUTXO) {
@@ -555,7 +566,10 @@ public class CachedBlockchain {
 			return "";
 		}
 		res += "]}";
+
 		return res;
 	}
 
+	public TreeSet<Integer> getBlockIDs() { return new TreeSet<Integer>(blockchain.keySet()); }
+	public Block getBlockWithID(int id) { return blockchain.get(id); }
 }

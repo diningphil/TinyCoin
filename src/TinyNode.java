@@ -150,8 +150,14 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 						System.out.println("Selfish miner " + nodeID + " broadcasting all private blocks ");
 						// BROADCASTS ALL PRIVATE NODES
 
-						for (Block b : blocksToKeep) // Pool wins due to the lead of 1
+						for (Block b : blocksToKeep) { // Pool wins due to the lead of 1
 							broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, b, node.getID()));
+
+							// TODO CHECK THAT I MUST ADD THEM TO THE PUBLIC BLOCKCHAIN ALSO!
+							// I will receive it from my neighbours in any case, because of flooding
+							receiveBlock(b, publicBlockchain);
+						}
+
 						blocksToKeep.clear();
 						privateBranchLen = 0;
 					} else {
@@ -238,7 +244,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 
 						if(blocksToKeep.size() > 0) {
 							if (blocksToKeep.size() != 2) System.err.println("Should be 2!");
-							System.out.println("Selfish miner publishing all the private blocks " + blocksToKeep.get(0).blockID + " and " + blocksToKeep.get(1).blockID);
+							System.out.println("Selfish miner publishing all the private blocks (can be != 2 due to other miners behaviour)");
 							for (int i = 0; i < blocksToKeep.size(); i++) {
 								Block privateBlock = blocksToKeep.remove(0);
 								broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, privateBlock, node.getID()));

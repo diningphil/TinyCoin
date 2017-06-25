@@ -64,6 +64,7 @@ public class SharedInfo {
     public HashMap<Long, Node> idToNode; // I want a mapping from ID to Node, not from index to node   
     
     public HashMap<Long, Integer> miners; // nodeId --> cpu, gpu, fpga, asic;
+    public HashSet<Integer> selfish; // used by the observer
     public HashSet<Long> normals;
     public List<Long> cpus;
     public List<Long> gpus;
@@ -73,6 +74,7 @@ public class SharedInfo {
     private SharedInfo() {
     	idToNode = new HashMap<>(); // nodeId --> Node;
     	miners = new HashMap<>();
+    	selfish = new HashSet<>();
     	normals = new HashSet<>();
     	cpus  = new ArrayList<Long>();
     	gpus  = new ArrayList<Long>();
