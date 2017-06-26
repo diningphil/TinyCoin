@@ -25,7 +25,7 @@ public class TinyCoinInitialiser implements NodeInitializer, Control {
 		TinyNode tinyProtocol = (TinyNode) node.getProtocol(pid);
 		long nodeID = node.getID();
 			
-		int normal_or_miner = (int) (SharedInfo.random.nextFloat()*100);
+		double normal_or_miner = SharedInfo.random.nextDouble();
 
 		SharedInfo sI = SharedInfo.getSharedInfo();
 	
@@ -36,14 +36,14 @@ public class TinyCoinInitialiser implements NodeInitializer, Control {
 			tinyProtocol.setType(SharedInfo.NORMAL);
 		} else {
 
-			int selfish = (int) (SharedInfo.random.nextFloat()*100);
+			double selfish = SharedInfo.random.nextDouble();
 			if(selfish <= SharedInfo.prob_selfish && selfishAssigned <= SharedInfo.max_selfishMiners) {
 				tinyProtocol.setSelfish(true);
 				sI.selfish.add((int) nodeID);
 				selfishAssigned++;
 			}
 
-			int value = (int) (SharedInfo.random.nextFloat()*100);
+			double value = SharedInfo.random.nextDouble();
 			
 			if (value <= SharedInfo.cpu) {
 				// create a cpu miner

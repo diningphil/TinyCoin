@@ -64,7 +64,7 @@ public class Oracle implements Control{
 
 		// MAY REQUIRE MUCH TIME WITH FEW NODES!!
 		while(chosenNode == -1) {
-			int power = (int) (SharedInfo.random.nextFloat()*100);
+			double power = SharedInfo.random.nextDouble();
 			if (power <= SharedInfo.cpuPower)
 				// pick a cpu miner
 				chosenNode = pickAtRandom(sI.cpus);

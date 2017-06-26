@@ -53,10 +53,10 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		}
 
 		
-		int val = (int) (SharedInfo.random.nextFloat()*100);
+		double val = SharedInfo.random.nextDouble();
 		if (val < SharedInfo.transGenerationThreshold) {
 			broadcastNewTransaction(node, pid);
-		}		
+		}
 	}
 	
 	private void broadcastNewTransaction(Node node, int pid) {
@@ -136,7 +136,6 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 			/** SELFISH MINING **/
 			if(isSelfish) {
 
-				//TODO COSA SUCCEDE SE METTO UN BLOCCO IN WAITING QUEUE?? NON E' ANCORA STATO ACCETTATO! POSSO ASSUMERE CHE SIA STATO MESSO IN CIMA? NO!
 				int deltaPrev = privateBlockchain.head.height - publicBlockchain.head.height;
 				Block block = privateBlockchain.mineBlock(nodeID);
 
@@ -145,15 +144,13 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 					/** POTREI AVERLO MESSO NELLA WAITING QUEUE **/
 					blocksToKeep.add(block);
 					privateBranchLen++;
-					if (deltaPrev == 0 && privateBranchLen == 2) { // Was tie with branch of 1
+					if (deltaPrev == 0 && privateBranchLen == 2 || deltaPrev >= 10) { // Was tie with branch of 1 || dopo un tot pubblico in ogni caso
 
 						System.out.println("Selfish miner " + nodeID + " broadcasting all private blocks ");
 						// BROADCASTS ALL PRIVATE NODES
-
 						for (Block b : blocksToKeep) { // Pool wins due to the lead of 1
 							broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, b, node.getID()));
 
-							// TODO CHECK THAT I MUST ADD THEM TO THE PUBLIC BLOCKCHAIN ALSO!
 							// I will receive it from my neighbours in any case, because of flooding
 							receiveBlock(b, publicBlockchain);
 						}
@@ -175,6 +172,8 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 					// Broadcast the block
 					System.out.println("Honest miner broadcasting MINED block " + block.blockID + " with prev ID " + block.prevBlockID);
 					broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, block, node.getID()));
+				} else {
+					System.out.println("No transactions to mine");
 				}
 			}
 		} else {

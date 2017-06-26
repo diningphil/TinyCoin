@@ -12,6 +12,13 @@ import peersim.core.Node;
 // Set up by the initializer
 
 public class SharedInfo {
+    public static Random getRandom() {
+        try {
+            return new Random(Configuration.getLong("random.seed"));
+        } catch (Exception e) {}
+        return new Random();
+    }
+
     private static SharedInfo instance = null;
 
     
@@ -19,7 +26,7 @@ public class SharedInfo {
     public static int latestBlockID = 0;     
     public static int transactionID = 0;
 	    
-    public static final Random random   = new Random(Configuration.getLong("random.seed"));
+    public static final Random random   = getRandom();
     
     public static final int NORMAL      = 0,
     						CPU_MINER   = 1,
@@ -31,30 +38,30 @@ public class SharedInfo {
     						maxTransPerBlock = Configuration.getInt("MAX_TRANS_PER_BLOCK"),
      						latency = Configuration.getInt("LATENCY"),
     						addLatencyPerTransaction = Configuration.getInt("EXTRA_LATENCY_PER_TRANS"),
-     						addRewardPerTransaction = Configuration.getInt("EXTRA_REWARD_PER_TRANS"),
-     						transGenerationThreshold = Configuration.getInt("PROB_GENERATE_TRANS");
+     						addRewardPerTransaction = Configuration.getInt("EXTRA_REWARD_PER_TRANS");
 
-    
+    public static final double transGenerationThreshold = Configuration.getDouble("PROB_GENERATE_TRANS");
+
     // Gaussian distribution for the oracle
     public static final int oracleMean = Configuration.getInt("ORACLE_MEAN"), 
     		                oracleVariance = Configuration.getInt("ORACLE_VARIANCE");
     
     // Probability to CREATE one type of miner or normal node
-    public static final int normal = Configuration.getInt("PROB_NORMAL"),
-    						cpu = Configuration.getInt("PROB_CPU"),
-    						gpu = Configuration.getInt("PROB_GPU"),
-    						fpga = Configuration.getInt("PROB_FPGA"),
-    						asic = Configuration.getInt("PROB_ASIC");
+    public static final double normal = Configuration.getDouble("PROB_NORMAL"),
+    						cpu = Configuration.getDouble("PROB_CPU"),
+    						gpu = Configuration.getDouble("PROB_GPU"),
+    						fpga = Configuration.getDouble("PROB_FPGA"),
+    						asic = Configuration.getDouble("PROB_ASIC");
 
     // Probability for a miner to be selfish
-    public static final int prob_selfish = Configuration.getInt("PROB_SELFISH"),
-                            max_selfishMiners = Configuration.getInt("MAX_SELFISH");
+    public static final double prob_selfish = Configuration.getDouble("PROB_SELFISH"),
+                            max_selfishMiners = Configuration.getDouble("MAX_SELFISH");
 
     // Probability to CHOOSE one type of miner
-    public static final int cpuPower = Configuration.getInt("PROB_CPU_POWER"),
-			gpuPower = Configuration.getInt("PROB_GPU_POWER"),
-			fpgaPower = Configuration.getInt("PROB_FPGA_POWER"),
-			asicPower = Configuration.getInt("PROB_ASIC_POWER");
+    public static final double cpuPower = Configuration.getDouble("PROB_CPU_POWER"),
+			gpuPower = Configuration.getDouble("PROB_GPU_POWER"),
+			fpgaPower = Configuration.getDouble("PROB_FPGA_POWER"),
+			asicPower = Configuration.getDouble("PROB_ASIC_POWER");
  
     public static final int maxInitialAmount = Configuration.getInt("MAX_INITIAL_BITCOINS");
     
