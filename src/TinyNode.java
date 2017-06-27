@@ -232,7 +232,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 						// Publish last block of private chain
 
 						if(blocksToKeep.size() > 0) {
-							System.out.println("Selfish miner " + node.getID() +" publishing last block of private chain " + blocksToKeep.get(0).blockID);
+							System.out.println("Selfish miner " + node.getID() + " received  " + b.blockID + " publishing last block of private chain " + blocksToKeep.get(0).blockID);
 							broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, blocksToKeep.remove(0), node.getID()));
 
 						} else {
@@ -243,7 +243,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 						// Publish the entire private chain
 
 						if(blocksToKeep.size() > 0) {
-							System.out.println("Selfish miner "+ node.getID() +" publishing all the private blocks (can be != 2 due to other miners behaviour)");
+							System.out.println("Selfish miner "+ node.getID() +" received  " + b.blockID + " publishing all the private blocks (can be != 2 due to other miners behaviour)");
 							for (int i = 0; i < blocksToKeep.size(); i++) {
 								Block privateBlock = blocksToKeep.remove(0);
 								broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, privateBlock, node.getID()));
@@ -257,7 +257,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 					else if(deltaPrev > 2){
 						// Publish first unpublished block
 						if (blocksToKeep.size() > 0) {
-							System.out.println("Selfish miner "+ node.getID() +" publishing first unpublished block " + blocksToKeep.get(0).blockID);
+							System.out.println("Selfish miner "+ node.getID() +" received  " + b.blockID +  " publishing first unpublished block " + blocksToKeep.get(0).blockID);
 							broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, blocksToKeep.remove(0), node.getID()));
 						} else {
 							System.err.println(" 3 CAN THIS HAPPEN?");

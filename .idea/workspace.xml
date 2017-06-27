@@ -2,15 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4f676745-89b6-497b-9ef4-51f2dafacd81" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/ErrorsToFix" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/Results" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/CachedBlockchain.java" afterPath="$PROJECT_DIR$/src/CachedBlockchain.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/SharedInfo.java" afterPath="$PROJECT_DIR$/src/SharedInfo.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/TinyCoinInitialiser.java" afterPath="$PROJECT_DIR$/src/TinyCoinInitialiser.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ErrorsToFix" afterPath="$PROJECT_DIR$/src/ErrorsToFix" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/TinyNode.java" afterPath="$PROJECT_DIR$/src/TinyNode.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/TinyNodeObserver.java" afterPath="$PROJECT_DIR$/src/TinyNodeObserver.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tinyCoin.cfg" afterPath="$PROJECT_DIR$/tinyCoin.cfg" />
     </list>
     <ignored path="$PROJECT_DIR$/bin/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -38,8 +31,8 @@
       <file leaf-file-name="TinyNode.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/TinyNode.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="413">
-              <caret line="259" column="65" lean-forward="false" selection-start-line="259" selection-start-column="65" selection-end-line="259" selection-end-column="65" />
+            <state relative-caret-position="600">
+              <caret line="230" column="46" lean-forward="false" selection-start-line="230" selection-start-column="46" selection-end-line="230" selection-end-column="46" />
               <folding>
                 <element signature="imports" expanded="true" />
               </folding>
@@ -47,11 +40,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="ErrorsToFix" pinned="false" current-in-tab="false">
+      <file leaf-file-name="ErrorsToFix" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/ErrorsToFix">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="165">
-              <caret line="11" column="74" lean-forward="false" selection-start-line="11" selection-start-column="74" selection-end-line="11" selection-end-column="74" />
+            <state relative-caret-position="135">
+              <caret line="9" column="33" lean-forward="false" selection-start-line="9" selection-start-column="33" selection-end-line="9" selection-end-column="33" />
               <folding />
             </state>
           </provider>
@@ -62,16 +55,6 @@
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="615">
               <caret line="41" column="19" lean-forward="false" selection-start-line="41" selection-start-column="19" selection-end-line="41" selection-end-column="19" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="Results" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/Results">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="567">
-              <caret line="52" column="95" lean-forward="true" selection-start-line="52" selection-start-column="95" selection-end-line="52" selection-end-column="95" />
               <folding />
             </state>
           </provider>
@@ -116,9 +99,9 @@
         <option value="$PROJECT_DIR$/src/SharedInfo.java" />
         <option value="$PROJECT_DIR$/src/TinyNodeObserver.java" />
         <option value="$PROJECT_DIR$/tinyCoin.cfg" />
+        <option value="$PROJECT_DIR$/src/Results" />
         <option value="$PROJECT_DIR$/src/TinyNode.java" />
         <option value="$PROJECT_DIR$/src/ErrorsToFix" />
-        <option value="$PROJECT_DIR$/src/Results" />
       </list>
     </option>
   </component>
@@ -626,12 +609,12 @@
       <workItem from="1498230994337" duration="26000" />
       <workItem from="1498237334481" duration="791000" />
       <workItem from="1498290949981" duration="6248000" />
-      <workItem from="1498549662617" duration="7046000" />
+      <workItem from="1498549662617" duration="8171000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="26043000" />
+    <option name="totallyTimeSpent" value="27168000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -973,20 +956,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/TinyNode.java">
+    <entry file="file://$PROJECT_DIR$/src/Results">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="413">
-          <caret line="259" column="65" lean-forward="false" selection-start-line="259" selection-start-column="65" selection-end-line="259" selection-end-column="65" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/ErrorsToFix">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="165">
-          <caret line="11" column="74" lean-forward="false" selection-start-line="11" selection-start-column="74" selection-end-line="11" selection-end-column="74" />
+        <state relative-caret-position="567">
+          <caret line="52" column="95" lean-forward="true" selection-start-line="52" selection-start-column="95" selection-end-line="52" selection-end-column="95" />
           <folding />
         </state>
       </provider>
@@ -999,10 +972,20 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/Results">
+    <entry file="file://$PROJECT_DIR$/src/TinyNode.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="567">
-          <caret line="52" column="95" lean-forward="true" selection-start-line="52" selection-start-column="95" selection-end-line="52" selection-end-column="95" />
+        <state relative-caret-position="600">
+          <caret line="230" column="46" lean-forward="false" selection-start-line="230" selection-start-column="46" selection-end-line="230" selection-end-column="46" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/ErrorsToFix">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="135">
+          <caret line="9" column="33" lean-forward="false" selection-start-line="9" selection-start-column="33" selection-end-line="9" selection-end-column="33" />
           <folding />
         </state>
       </provider>
