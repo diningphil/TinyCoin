@@ -20,7 +20,7 @@ public class TinyNodeObserver implements Control
 	public TinyNodeObserver(String name)
 	{
 		size = Network.size();
-		minLength = 1; maxLength = 1;
+		minLength = 1; maxLength = 0;
 		forkCounter = 0; avgLength = 0;
 		rewardedSelfishBlocks = 0;
 		blockchainHeight = 0;
@@ -50,6 +50,18 @@ public class TinyNodeObserver implements Control
 			computeBlockchainStatistics(protocol.publicBlockchain);
 			System.out.println("Node " + node.getID() + " public forks:" + protocol.publicBlockchain.numberOfForks + " private forks:" + protocol.privateBlockchain.numberOfForks);
 		}
+
+		// Selfish
+		TinyNode protocol0 = (TinyNode) Network.get(0).getProtocol(pid);
+		System.out.println((protocol0.publicBlockchain.longestPathToJSON(protocol0.publicBlockchain.head)));
+		System.out.println((protocol0.privateBlockchain.longestPathToJSON(protocol0.privateBlockchain.head)));
+
+		// Another node
+		TinyNode protocol300 = (TinyNode) Network.get(300).getProtocol(pid);
+		System.out.println((protocol300.publicBlockchain.longestPathToJSON(protocol300.publicBlockchain.head)));
+		System.out.println((protocol300.privateBlockchain.longestPathToJSON(protocol300.privateBlockchain.head)));
+
+
 		avgLength /= forkCounter;
 		blockchainHeight /= size;
 
@@ -65,6 +77,7 @@ public class TinyNodeObserver implements Control
 	* punto di biforcazione, e assegna la max lunghezza del ramo forked che ha perso
 	**/
 	public void computeBlockchainStatistics(CachedBlockchain blockchain) {
+
 		SharedInfo sI = SharedInfo.getSharedInfo();
 
 		// Exploit the fact that block ids are unique
@@ -77,8 +90,9 @@ public class TinyNodeObserver implements Control
 		// Registra i nodi della longest chain
 		while(curr.blockID != -1) {
 			seenIds.add(curr.blockID);
-			if(sI.selfish.contains(curr.minerID))
-				rewardedSelfishBlocks += 1.0/size; // Average over the nodes
+			if(sI.selfish.contains(curr.minerID)) {
+				rewardedSelfishBlocks += 1.0 / size; // Average over the nodes
+			}
 			curr = blockchain.getBlockWithID(curr.prevBlockID);
 		}
 

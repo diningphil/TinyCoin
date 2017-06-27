@@ -5,6 +5,9 @@ Selfish miner 2 received  59 publishing all the private blocks (can be != 2 due 
 Selfish miner 2 received  57 publishing last block of private chain 58
  1 CAN THIS HAPPEN?
 
-
  No, il fatto è che vede il suo! Quello che aveva pubblicato, però significa che received block is true, quindi prima lo aveva rifiutato?
  Oppure c'è qualche inconsistenza
+
+
+
+RISOLTO: quando inviavo in broadcast un blocco minato, non lo aggiungevo alla mia public blockchain. Questo faceva si

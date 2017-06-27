@@ -80,9 +80,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		}
 		else {
 
-			// TODO cosa fare se sono selfish e ricevo transazioni? Costruisco una che mi interessa!
-			// TODO CONTROLLA PER BENE cosa devo fare se ricevo una transazione. E' importante definire un comportamento
-			// Per ora facciamo così
+			// Cosa fare se sono selfish e ricevo transazioni? Costruisco una che mi interessa secondo la private blockchain!!
 
 			Transaction t = privateBlockchain.buildTransaction(nodeID);
 
@@ -90,7 +88,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 				// update your UTXO (use receivedTransaction)
 				privateBlockchain.receiveTransaction(t);
 
-				// TODO I'm not sure it will be accepted! CONSEQUENTLY SOME BLOCKS MAY BE REFUSED BY PUBLIC BLOCKCHAINS!
+				// I'm not sure it will be accepted! CONSEQUENTLY SOME TRANSACTIONS/BLOCKS MAY BE REFUSED BY PUBLIC BLOCKCHAINS!
 				publicBlockchain.receiveTransaction(t);
 
 				// Broadcast the block
@@ -144,7 +142,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 					blocksToKeep.add(block);
 					privateBranchLen++;
 
-					if (deltaPrev == 0 && privateBranchLen == 2 || deltaPrev >= 10) { // Was tie with branch of 1 || dopo un tot pubblico in ogni caso
+					if (deltaPrev == 0 && privateBranchLen == 2 /*|| deltaPrev >= 10*/) { // Was tie with branch of 1 || dopo un tot pubblico in ogni caso
 
 						System.out.println("Selfish miner " + nodeID + " broadcasting all private blocks ");
 
@@ -161,6 +159,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 					} else {
 						System.out.println("Selfish miner " + nodeID + " hiding block " + block.blockID + " prevID is " + block.prevBlockID + " private head is " + privateBlockchain.head.blockID);
 					}
+
 				} else { // block is null
 					System.err.println("Node " + nodeID + ": mining has not produced a block!");
 				}
@@ -233,23 +232,27 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 
 						if(blocksToKeep.size() > 0) {
 							System.out.println("Selfish miner " + node.getID() + " received  " + b.blockID + " publishing last block of private chain " + blocksToKeep.get(0).blockID);
-							broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, blocksToKeep.remove(0), node.getID()));
+							Block last = blocksToKeep.remove(0);
 
-						} else {
-							System.err.println(" 1 CAN THIS HAPPEN?");
+							broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, last, node.getID()));
+
+							receiveBlock(last, publicBlockchain);
+
 						}
 					}
 					else if (deltaPrev == 2) {
 						// Publish the entire private chain
 
 						if(blocksToKeep.size() > 0) {
-							System.out.println("Selfish miner "+ node.getID() +" received  " + b.blockID + " publishing all the private blocks (can be != 2 due to other miners behaviour)");
+							System.out.println("Selfish miner "+ node.getID() +" received  " + b.blockID + " publishing all the private blocks");
 							for (int i = 0; i < blocksToKeep.size(); i++) {
+
 								Block privateBlock = blocksToKeep.remove(0);
+
 								broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, privateBlock, node.getID()));
+
+								receiveBlock(privateBlock, publicBlockchain);
 							}
-						} else {
-							System.err.println(" 2 CAN THIS HAPPEN?");
 						}
 
 						privateBranchLen = 0;
@@ -258,9 +261,12 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 						// Publish first unpublished block
 						if (blocksToKeep.size() > 0) {
 							System.out.println("Selfish miner "+ node.getID() +" received  " + b.blockID +  " publishing first unpublished block " + blocksToKeep.get(0).blockID);
-							broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, blocksToKeep.remove(0), node.getID()));
-						} else {
-							System.err.println(" 3 CAN THIS HAPPEN?");
+
+							Block first = blocksToKeep.remove(0);
+
+							broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, first, node.getID()));
+
+							receiveBlock(first, publicBlockchain);
 						}
 					}
 				}

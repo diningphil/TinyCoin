@@ -7,8 +7,8 @@ DEGREE                   5
 MAX_INITIAL_BITCOINS     100
 PROB_GENERATE_TRANS      0.0001
 
-LATENCY =                0        3                                                                    50       3
-EXTRA_LATENCY_PER_TRANS  0        1                        20     1                                    30       1
+LATENCY =                0        3                                                                    50
+EXTRA_LATENCY_PER_TRANS  0        1                     20      1                                      30
 MAX_TRANS_PER_BLOCK      10
 
 BLOCK_REWARD             10
@@ -39,10 +39,10 @@ MAX_ASICS                500                                      1
 
 # Prob that a CPU, GPU, FPGA, ASIC is also selfish
 
-PROB_CPU_SELFISH         0.3             0.3     100     0.3      0
-PROB_GPU_SELFISH         0.3             0.3     100     0.3      0
-PROB_FPGA_SELFISH        0.3             0.3     100     0.3      0
-PROB_ASIC_SELFISH        0.3             0.3     100     0.3      1                             0                1
+PROB_CPU_SELFISH         0.3     0.3     0.3     1     0.3        0
+PROB_GPU_SELFISH         0.3     0.3     0.3     1     0.3        0
+PROB_FPGA_SELFISH        0.3     0.3     0.3     1     0.3        0
+PROB_ASIC_SELFISH        0.3     0.3     0.3     1     0.3        1                            0        1
 
 MAX_SELFISH              500                                      1
 
@@ -50,9 +50,10 @@ MAX_SELFISH              500                                      1
 
 TOT BLOCKS (Around 160)
 
-LONGEST_HEIGHT           118     100     126     11      95       129    123        130         165      118     131
-NUM_FORKS                43      62      39      40      66       35     42         36          0        39      34
-SELFISH_REWARDED         18      12      2       11      15       48     83(67,5%) 107(82%)     0        0       105
-MIN_FORK                 1       1       1       1       1        1      1          1           0        1       1
-AVG_FORK                 1.14    1.05    1.02    2.35    1.04     1.0    1.02       1.03        0        1.20    1
-MAX_FORK                 3       2       2       7       2        1      2          2           0        5       1
+LONGEST_HEIGHT           123     105     133     11      88       99     103        124         165      103
+NUM_FORKS                39      57      32      33      75       10     19         11          0        32
+SELFISH_REWARDED         10      4       0       11      8        32     72(70%)    114(92%)    0        101(99%)
+MIN_FORK                 1       1       1       1       1        1      1          1           0        1
+AVG_FORK                 1.08    1.03    1       2.8     1.04     6.4    2.9        3,45        0        1.20
+MAX_FORK                 2       2       1       9       2        15     10         7           0        5
+                                                                |- (many bl waiting here) -|
