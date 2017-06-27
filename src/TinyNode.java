@@ -245,14 +245,13 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 
 						if(blocksToKeep.size() > 0) {
 							System.out.println("Selfish miner "+ node.getID() +" received  " + b.blockID + " publishing all the private blocks");
-							for (int i = 0; i < blocksToKeep.size(); i++) {
-
-								Block privateBlock = blocksToKeep.remove(0);
+							for (Block privateBlock : blocksToKeep) {
 
 								broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, privateBlock, node.getID()));
 
 								receiveBlock(privateBlock, publicBlockchain);
 							}
+							blocksToKeep.clear();
 						}
 
 						privateBranchLen = 0;

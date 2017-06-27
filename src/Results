@@ -50,6 +50,9 @@ MAX_SELFISH              500                                      1
 
 TOT BLOCKS (Around 160)
 
+
+                    DA RIFARE!!
+
 LONGEST_HEIGHT           123     105     133     11      88       99     103        124         165      103
 NUM_FORKS                39      57      32      33      75       10     19         11          0        32
 SELFISH_REWARDED         10      4       0       11      8        32     72(70%)    114(92%)    0        101(99%)
