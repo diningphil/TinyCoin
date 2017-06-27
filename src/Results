@@ -1,0 +1,58 @@
+
+
+CYCLES                   100000
+SIZE                     500
+DEGREE                   5
+
+MAX_INITIAL_BITCOINS     100
+PROB_GENERATE_TRANS      0.0001
+
+LATENCY =                0        3                                                                    50       3
+EXTRA_LATENCY_PER_TRANS  0        1                        20     1                                    30       1
+MAX_TRANS_PER_BLOCK      10
+
+BLOCK_REWARD             10
+EXTRA_REWARD_PER_TRANS   5
+
+ORACLE_MEAN              600
+ORACLE_VARIANCE          50
+
+# CHOOSE a miner
+
+PROB_CPU_POWER           0.05
+PROB_GPU_POWER           0.15
+PROB_FPGA_POWER          0.45                                     0.50      0.40   0.30
+PROB_ASIC_POWER          1                                        1         (60%)  (70%)
+
+# CREATE a miner
+
+PROB_NORMAL              0.75     0.75   0.5    0.75
+
+# 1 - prob_normal
+
+PROB_CPU                 0.3
+PROB_GPU                 0.75
+PROB_FPGA                0.90
+PROB_ASIC                1
+
+MAX_ASICS                500                                      1
+
+# Prob that a CPU, GPU, FPGA, ASIC is also selfish
+
+PROB_CPU_SELFISH         0.3             0.3     100     0.3      0
+PROB_GPU_SELFISH         0.3             0.3     100     0.3      0
+PROB_FPGA_SELFISH        0.3             0.3     100     0.3      0
+PROB_ASIC_SELFISH        0.3             0.3     100     0.3      1                             0                1
+
+MAX_SELFISH              500                                      1
+
+# Results
+
+TOT BLOCKS (Around 160)
+
+LONGEST_HEIGHT           118     100     126     11      95       129    123        130         165      118     131
+NUM_FORKS                43      62      39      40      66       35     42         36          0        39      34
+SELFISH_REWARDED         18      12      2       11      15       48     83(67,5%) 107(82%)     0        0       105
+MIN_FORK                 1       1       1       1       1        1      1          1           0        1       1
+AVG_FORK                 1.14    1.05    1.02    2.35    1.04     1.0    1.02       1.03        0        1.20    1
+MAX_FORK                 3       2       2       7       2        1      2          2           0        5       1

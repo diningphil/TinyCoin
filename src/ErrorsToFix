@@ -1,0 +1,12 @@
+Honest miner broadcasting MINED block 157 with prev ID 155
+Honest miner broadcasting MINED block 158 with prev ID 157
+Selfish miner 3 hiding block 159 prevID is 158 private head is 159
+Selfish miner 3 hiding block 160 prevID is 159 private head is 160
+Selfish miner 3 hiding block 161 prevID is 160 private head is 161
+Selfish miner 3 hiding block 162 prevID is 161 private head is 162
+Selfish miner 3 hiding block 163 prevID is 162 private head is 163
+Honest miner broadcasting MINED block 164 with prev ID 158
+Selfish miner publishing first unpublished block 159
+Selfish miner publishing first unpublished block 160
+
+Perchè pubblica 2 volte il suo primo?? MMM... dovrebbe pubblicare solo 159

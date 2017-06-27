@@ -82,29 +82,27 @@ public class TinyNodeObserver implements Control
 			curr = blockchain.getBlockWithID(curr.prevBlockID);
 		}
 
-		Iterator descendingIt = allIds.descendingIterator();
+		seenIds.add(-1);
+
+		Iterator descendingIt = allIds.descendingIterator(); // Guardo i blocchi a partire dall' ID più alto (di quelli che non appartengono alla longest chain)
 		while(descendingIt.hasNext()) {
 			int id = (int) descendingIt.next();
 
 
-			if(!seenIds.contains(id)) { // It is in a fork
-//				System.err.println("Its the turn of " + id);
+			if(!seenIds.contains(id)) { // It belongs to a fork
 				int length = 0;
 				Block forkEnd = blockchain.getBlockWithID(id);
 				while(!seenIds.contains(forkEnd.blockID)) {
-//					System.err.println("Forkend id is " + forkEnd.blockID);
 					length++;
 					seenIds.add(forkEnd.blockID);
 					forkEnd = blockchain.getBlockWithID(forkEnd.prevBlockID);
 				}
-//				System.err.println("Uscito2");
 				// A bifurcation point has been reached. Update stats
 				if(maxLength < length ) maxLength = length;
 				if(minLength > length ) minLength = length;
 				avgLength += ((float)length) ;
 				forkCounter++;
 			}
-//			System.err.println("Uscito1");
 		}
 	}
 

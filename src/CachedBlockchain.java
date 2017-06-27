@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.TreeSet;
 
@@ -30,7 +29,7 @@ public class CachedBlockchain {
 
 	// These fields are useful to simulate a local pool of transactions
 	private ArrayList<Integer> tempUTXO; // bitcoin address --> temporary amount of bitcoins, needed to accept a transaction
-	// TODO make this less memory consuming, while preserving the order of arrival
+
 	private HashMap<Integer, Transaction> memPoolOfTransactions;
 	private ArrayList<Integer> orderedTransactionsInPool; // FIFO QUEUE
 
@@ -43,7 +42,7 @@ public class CachedBlockchain {
 		acceptedTransactions = new TreeSet<>();
 		UTXO = new ArrayList<>(Network.size());
 			for(int i = 0; i < Network.size(); i++)
-				UTXO.add(i, 0);;
+				UTXO.add(i, 0);
 		tempUTXO = (ArrayList<Integer>) UTXO.clone();
 		memPoolOfTransactions = new HashMap<>();
 		orderedTransactionsInPool = new ArrayList<>();
@@ -54,24 +53,29 @@ public class CachedBlockchain {
 	@SuppressWarnings("unchecked")
 	public CachedBlockchain(CachedBlockchain cachedBlockchain) {
 
-		// TODO SE DECIDO DI CONFERMARE I BLOCCHI/TRANSAZIONI NON POSSO CONDIVIDERNE I PUNTATORI!
 		blockchain = (HashMap<Integer, Block>) cachedBlockchain.blockchain.clone();
 		head = cachedBlockchain.head;
 		numberOfForks = cachedBlockchain.numberOfForks;
 
 		acceptedTransactions = new TreeSet<>();
-		for(Integer transID : cachedBlockchain.acceptedTransactions)
-			acceptedTransactions.add(transID);
+		//for(Integer transID : cachedBlockchain.acceptedTransactions)
+		//	acceptedTransactions.add(transID);
+		acceptedTransactions.addAll(cachedBlockchain.acceptedTransactions);
 
 		UTXO = new ArrayList<>();
-		for(int i = 0; i < cachedBlockchain.UTXO.size(); i++)
-			UTXO.add(cachedBlockchain.UTXO.get(i));
+		//for(int i = 0; i < cachedBlockchain.UTXO.size(); i++)
+		//	UTXO.add(cachedBlockchain.UTXO.get(i));
+		UTXO.addAll(cachedBlockchain.UTXO);
+
 		tempUTXO = new ArrayList<>();
-		for(int i = 0; i < cachedBlockchain.tempUTXO.size(); i++)
-			tempUTXO.add(cachedBlockchain.tempUTXO.get(i));
+		//for(int i = 0; i < cachedBlockchain.tempUTXO.size(); i++)
+		//	tempUTXO.add(cachedBlockchain.tempUTXO.get(i));
+		tempUTXO.addAll(cachedBlockchain.tempUTXO);
+
 		orderedTransactionsInPool = new ArrayList<>();
-		for(int i = 0; i < cachedBlockchain.orderedTransactionsInPool.size(); i++)
-			orderedTransactionsInPool.add(cachedBlockchain.orderedTransactionsInPool.get(i));
+		//for(int i = 0; i < cachedBlockchain.orderedTransactionsInPool.size(); i++)
+		//	orderedTransactionsInPool.add(cachedBlockchain.orderedTransactionsInPool.get(i));
+		orderedTransactionsInPool.addAll(cachedBlockchain.orderedTransactionsInPool);
 
 		// posso copiare solo le mappe chiavi valore perchè i valori non vengono modificati
 		memPoolOfTransactions = (HashMap<Integer, Transaction>) cachedBlockchain.memPoolOfTransactions.clone();
@@ -96,17 +100,13 @@ public class CachedBlockchain {
 		int destNode = SharedInfo.random.nextInt(Network.size());
 
 		// CAST TO INT! We won't never have a billion nodes in the simulation :)
-		Transaction newTrans = new Transaction(SharedInfo.getNextTransactionID(), transBTCs, (int) nodeID, destNode);
+		return new Transaction(SharedInfo.getNextTransactionID(), transBTCs, (int) nodeID, destNode);
 
-		return newTrans;
 	}
 
 	public Block mineBlock(long nodeID) {
-
-		Block block = buildBlock(nodeID);
-
 		// Can be null
-		return block;
+		return buildBlock(nodeID);
 	}
 
 	private Block buildBlock(long minerID) {
@@ -148,11 +148,11 @@ public class CachedBlockchain {
 	}
 	public boolean receiveBlock(Block block) {
 
-		/** ALREADY PRESENT **/
+		/* ALREADY PRESENT */
 		if(blockchain.containsKey(block.blockID))
 			return false; // already present
 
-		/** BASE CASE: GENESIS BLOCK **/
+		/* BASE CASE: GENESIS BLOCK */
 		if(block.blockID == -1 && head == null) { // Check if I'm adding the genesis block
 		// Executed just 1 time
 
@@ -171,7 +171,7 @@ public class CachedBlockchain {
 
 			cleanupMemoryPool(head);
 
-		/** ADD TO BLOCKCHAIN IF VALID (An honest miner will create and send a valid block, but you never know...) **/
+		/* ADD TO BLOCKCHAIN IF VALID (An honest miner will create and send a valid block, but you never know...) */
 		} else if(blockchain.containsKey(block.prevBlockID)) {
 
 			// This is necessary because I do not use a tree to represent the blockchain
@@ -202,8 +202,8 @@ public class CachedBlockchain {
 					if(waitingBlocks.containsKey(block.blockID)) {
 						System.out.println("Block " + block.blockID + " was being waited by other blocks");
 						ArrayList<Block> blocksToAdd = waitingBlocks.get(block.blockID);
-						for(int i = 0; i < blocksToAdd.size(); i++)
-							receiveBlock(blocksToAdd.get(i));
+						for(Block b : blocksToAdd)
+							receiveBlock(b);
 
 						waitingBlocks.remove(block.blockID);
 					}
@@ -253,8 +253,8 @@ public class CachedBlockchain {
 					if(waitingBlocks.containsKey(block.blockID)) {
 						System.out.println("Block " + block.blockID + " was necessary to other blocks");
 						ArrayList<Block> blocksToAdd = waitingBlocks.get(block.blockID);
-						for(int i = 0; i < blocksToAdd.size(); i++)
-							receiveBlock(blocksToAdd.get(i));
+						for(Block b : blocksToAdd)
+							receiveBlock(b);
 
 						waitingBlocks.remove(block.blockID);
 					}
@@ -268,25 +268,22 @@ public class CachedBlockchain {
 				}
 			}
 
-		/** I AM WAITING FOR A PREVIOUS BLOCK WHICH HAS NOT ARRIVED YET **/
+		/* I AM WAITING FOR A PREVIOUS BLOCK WHICH HAS NOT ARRIVED YET */
 		} else { // block with ID "prevBlockID" has not been received yet
 
 			// See P2P Q&A on Moodle
 
 			if( ! waitingBlocks.containsKey(block.prevBlockID) )
-				waitingBlocks.put(block.prevBlockID, new ArrayList<Block>());
+				waitingBlocks.put(block.prevBlockID, new ArrayList<>());
 
 			//waitingBlockIDs.add(block.blockID);
 
 
 			ArrayList<Block> blocksToAdd = waitingBlocks.get(block.prevBlockID);
 
-			for(int i = 0; i < blocksToAdd.size(); i++)
-				if (blocksToAdd.get(i).blockID == block.blockID)
+			for(Block b : blocksToAdd)
+				if (b.blockID == block.blockID)
 					return false; // already present
-
-			//if(head.height == 251)
-			//	System.out.print("");
 
 			System.out.println("NODE "+ nodeID +" Putting block "+ block.blockID +" in waiting queue for " + block.prevBlockID + " my blockchain has max height " + head.height);
 			waitingBlocks.get(block.prevBlockID).add(block);
@@ -429,8 +426,6 @@ public class CachedBlockchain {
 
 		}
 
-		assert tmpBlock.blockID == tmpFork.blockID;
-
 		int bifurcationID = tmpBlock.blockID;
 
 		// Now we have discovered the point where the fork was created
@@ -497,11 +492,11 @@ public class CachedBlockchain {
 	public boolean receiveTransaction(Transaction t) {
 
 		// Algorithm taken from slide "Receiving a transaction"
-		/** there is only one input
+		/* there is only one input
 		for each input (h, i) in t do
 		*/
 
-		/** It does not make sense to check an output if each transaction is a simple transfer of money
+		/* It does not make sense to check an output if each transaction is a simple transfer of money
 		 * from a to b. It is unspecified in the project whether we must find a set of input transactions that
 		 * matches the output or not, and it would imply the creation of new transactions to reflect the "change".
 		 * For the moment assume this version
@@ -519,13 +514,13 @@ public class CachedBlockchain {
 			return false;
 		}
 
-		/** This check is unnecessary, only one input, one output with same bitcoin value
+		/* This check is unnecessary, only one input, one output with same bitcoin value
 		//if sum of values of inputs < sum of values of new outputs then
 			Drop t and stop
 		end if
 		*/
 
-		/** for each input (h, i) in t do
+		/* for each input (h, i) in t do
 		  *   Remove (h, i) from local UTXO
 		  * end for */
 		tempUTXO.set(t.srcAddress, tempUTXO.get(t.srcAddress) - t.bitcoins);
@@ -540,14 +535,12 @@ public class CachedBlockchain {
 
 	private boolean canSpendMoney(ArrayList<Integer> bitcoinStructure, Transaction t) {
 		int ownedAmount = bitcoinStructure.get(t.srcAddress);
-		if (ownedAmount < t.bitcoins) {
-			return false; // discard
-		}
-		return true;
+		return ownedAmount >= t.bitcoins; // true if I have enough bitcoins, false otherwise
 	}
 
+	// Get the blockchain as a JSON object
 	public String longestPathToJSON(Block start) {
-		String res = "{ blockchain: [";
+		StringBuilder res = new StringBuilder("{ blockchain: [");
 		Block curr = null;
 		if(start != null) {
 			do {
@@ -556,20 +549,20 @@ public class CachedBlockchain {
 				else
 					curr = blockchain.get(curr.prevBlockID);
 
-				res += curr.toJSON();
+				res.append(curr.toJSON());
 				if(curr.prevBlockID != -1) {
-					res += ",";
+					res.append(",");
 				}
 			} while(curr.prevBlockID != -1);
 
 		} else {
 			return "";
 		}
-		res += "]}";
+		res.append("]}");
 
-		return res;
+		return res.toString();
 	}
 
-	public TreeSet<Integer> getBlockIDs() { return new TreeSet<Integer>(blockchain.keySet()); }
+	public TreeSet<Integer> getBlockIDs() { return new TreeSet<>(blockchain.keySet()); }
 	public Block getBlockWithID(int id) { return blockchain.get(id); }
 }

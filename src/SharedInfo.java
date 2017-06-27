@@ -12,6 +12,7 @@ import peersim.core.Node;
 // Set up by the initializer
 
 public class SharedInfo {
+
     public static Random getRandom() {
         try {
             return new Random(Configuration.getLong("random.seed"));
@@ -54,8 +55,11 @@ public class SharedInfo {
     						asic = Configuration.getDouble("PROB_ASIC");
 
     // Probability for a miner to be selfish
-    public static final double prob_selfish = Configuration.getDouble("PROB_SELFISH"),
-                            max_selfishMiners = Configuration.getDouble("MAX_SELFISH");
+    public static final double prob_cpu_selfish = Configuration.getDouble("PROB_CPU_SELFISH"),
+                                prob_gpu_selfish = Configuration.getDouble("PROB_GPU_SELFISH"),
+                                prob_fpga_selfish = Configuration.getDouble("PROB_FPGA_SELFISH"),
+                                prob_asic_selfish = Configuration.getDouble("PROB_ASIC_SELFISH"),
+                                max_selfishMiners = Configuration.getDouble("MAX_SELFISH");
 
     // Probability to CHOOSE one type of miner
     public static final double cpuPower = Configuration.getDouble("PROB_CPU_POWER"),
@@ -64,7 +68,8 @@ public class SharedInfo {
 			asicPower = Configuration.getDouble("PROB_ASIC_POWER");
  
     public static final int maxInitialAmount = Configuration.getInt("MAX_INITIAL_BITCOINS");
-    
+    public static int maxAsic = Configuration.getInt("MAX_ASICS");
+
     //----------------------------------------------------------------------------------//
     
     // NOTE: it works because the network is kept static!!

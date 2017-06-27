@@ -30,12 +30,12 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 	 */
 	public Object clone()
 	{
-		TinyNode af = null;
+		TinyNode af;
 		af = (TinyNode) super.clone();
-		af.neighbours = new ArrayList<Node>();
+		af.neighbours = new ArrayList<>();
 		af.publicBlockchain = new CachedBlockchain();
 
-		/** SELFISH MINING FIELDS **/
+		/* SELFISH MINING FIELDS */
 		af.privateBlockchain = new CachedBlockchain();
 		af.isSelfish = false;
 		af.privateBranchLen = 0;
@@ -71,7 +71,6 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 				// update your UTXO (use receivedTransaction)
 				publicBlockchain.receiveTransaction(t);
 
-				//TODO CONTROLLA se va fatto
 				privateBlockchain.receiveTransaction(t);
 
 				// Broadcast the block
@@ -133,7 +132,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 		// If it is MINED message
 		if(msg.type == TinyCoinMessage.MINED) {
 
-			/** SELFISH MINING **/
+			/* SELFISH MINING */
 			if(isSelfish) {
 
 				int deltaPrev = privateBlockchain.head.height - publicBlockchain.head.height;
@@ -141,13 +140,15 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 
 				if(block != null) {
 
-					/** POTREI AVERLO MESSO NELLA WAITING QUEUE **/
+					/* I MAY HAVE PUT THE BLOCK INTO THE WAITING QUEUE */
 					blocksToKeep.add(block);
 					privateBranchLen++;
+
 					if (deltaPrev == 0 && privateBranchLen == 2 || deltaPrev >= 10) { // Was tie with branch of 1 || dopo un tot pubblico in ogni caso
 
 						System.out.println("Selfish miner " + nodeID + " broadcasting all private blocks ");
-						// BROADCASTS ALL PRIVATE NODES
+
+						// broadcast the private chain
 						for (Block b : blocksToKeep) { // Pool wins due to the lead of 1
 							broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, b, node.getID()));
 
@@ -160,11 +161,11 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 					} else {
 						System.out.println("Selfish miner " + nodeID + " hiding block " + block.blockID + " prevID is " + block.prevBlockID + " private head is " + privateBlockchain.head.blockID);
 					}
-				} else {
+				} else { // block is null
 					System.err.println("Node " + nodeID + ": mining has not produced a block!");
 				}
 
-				/** HONEST MINING **/
+				/* HONEST MINING */
 			} else {
 				Block block = publicBlockchain.mineBlock(nodeID);
 
@@ -205,7 +206,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 
 			Block b = (Block) msg.message;
 
-			/** SELFISH MINING **/
+			/* SELFISH MINING */
 			if(isSelfish) {
 
 				if(b.blockID == -1) { // GENESIS BLOCK
@@ -214,40 +215,41 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 					return;
 				}
 
-				// COSA SUCCEDE SE METTO UN BLOCCO IN WAITING QUEUE?? NON E' ANCORA STATO ACCETTATO! IL MINER NON LO SA.. AL PIU' IL BLOCCO VERRA' RIFIUTATO DOPO DA UN'ALTRA FORK
-				// PUO' ACCADERE CHE UN ALTRO SELFISH MINER PUBBLICHI UN BLOCCO. SE IO NON NE HO PIU' E' INUTILE CHE LI PUBBLICHI
+				// It may happen that another selfish miners publishes a block. If I have already published my blocks, I must do nothing
 
 				int deltaPrev = privateBlockchain.head.height - publicBlockchain.head.height;
 
 				if(receiveBlock(b, publicBlockchain)) {
 
-					if(deltaPrev <= 0) { /** THE PUBLIC CHAIN COULD HAVE ADDED ALSO BLOCKS THAT WERE WAITING! **/
+					if(deltaPrev <= 0) { /* <= 0 because the public chain could have added other blocks that were waiting! */
 						// They win
 
 						privateBlockchain = new CachedBlockchain(publicBlockchain);
 						privateBranchLen = 0;
 						blocksToKeep.clear();
 					}
-					else if (deltaPrev == 1) { /** SAME LENGHT, try our luck **/
+					else if (deltaPrev == 1) { /* SAME LENGHT, try our luck, OR ANOTHER FORK HAS HAPPENED; AND DIFFERENCE IS STILL 1 */
 						// Publish last block of private chain
 
 						if(blocksToKeep.size() > 0) {
-							if(blocksToKeep.size() != 1) System.err.println("Should be 1!");
-							System.out.println("Selfish miner publishing last block of private chain " + blocksToKeep.get(0).blockID);
+							System.out.println("Selfish miner " + node.getID() +" publishing last block of private chain " + blocksToKeep.get(0).blockID);
 							broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, blocksToKeep.remove(0), node.getID()));
 
+						} else {
+							System.err.println(" 1 CAN THIS HAPPEN?");
 						}
 					}
 					else if (deltaPrev == 2) {
-						// Publish all of the private chain
+						// Publish the entire private chain
 
 						if(blocksToKeep.size() > 0) {
-							if (blocksToKeep.size() != 2) System.err.println("Should be 2!");
-							System.out.println("Selfish miner publishing all the private blocks (can be != 2 due to other miners behaviour)");
+							System.out.println("Selfish miner "+ node.getID() +" publishing all the private blocks (can be != 2 due to other miners behaviour)");
 							for (int i = 0; i < blocksToKeep.size(); i++) {
 								Block privateBlock = blocksToKeep.remove(0);
 								broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, privateBlock, node.getID()));
 							}
+						} else {
+							System.err.println(" 2 CAN THIS HAPPEN?");
 						}
 
 						privateBranchLen = 0;
@@ -255,9 +257,10 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 					else if(deltaPrev > 2){
 						// Publish first unpublished block
 						if (blocksToKeep.size() > 0) {
-							if (blocksToKeep.size() <= 2) System.err.println("Should be > 2!");
-							System.out.println("Selfish miner publishing first unpublished block " + blocksToKeep.get(0).blockID);
+							System.out.println("Selfish miner "+ node.getID() +" publishing first unpublished block " + blocksToKeep.get(0).blockID);
 							broadcastMessage(node, pid, new TinyCoinMessage(TinyCoinMessage.BLOCK, blocksToKeep.remove(0), node.getID()));
+						} else {
+							System.err.println(" 3 CAN THIS HAPPEN?");
 						}
 					}
 				}
