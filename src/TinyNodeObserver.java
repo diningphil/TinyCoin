@@ -51,16 +51,6 @@ public class TinyNodeObserver implements Control
 			System.out.println("Node " + node.getID() + " public forks:" + protocol.publicBlockchain.numberOfForks + " private forks:" + protocol.privateBlockchain.numberOfForks);
 		}
 
-		// Selfish
-		TinyNode protocol0 = (TinyNode) Network.get(0).getProtocol(pid);
-		System.out.println((protocol0.publicBlockchain.longestPathToJSON(protocol0.publicBlockchain.head)));
-		System.out.println((protocol0.privateBlockchain.longestPathToJSON(protocol0.privateBlockchain.head)));
-
-		// Another node
-		TinyNode protocol300 = (TinyNode) Network.get(300).getProtocol(pid);
-		System.out.println((protocol300.publicBlockchain.longestPathToJSON(protocol300.publicBlockchain.head)));
-		System.out.println((protocol300.privateBlockchain.longestPathToJSON(protocol300.privateBlockchain.head)));
-
 
 		avgLength /= forkCounter;
 		blockchainHeight /= size;
@@ -98,7 +88,7 @@ public class TinyNodeObserver implements Control
 
 		seenIds.add(-1);
 
-		Iterator descendingIt = allIds.descendingIterator(); // Guardo i blocchi a partire dall' ID più alto (di quelli che non appartengono alla longest chain)
+		Iterator descendingIt = allIds.descendingIterator(); // Inspect unseen blocks in descending ID order (the highest unseen will be the head of a fork)
 		while(descendingIt.hasNext()) {
 			int id = (int) descendingIt.next();
 

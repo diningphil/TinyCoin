@@ -142,7 +142,9 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 					blocksToKeep.add(block);
 					privateBranchLen++;
 
-					if (deltaPrev == 0 && privateBranchLen == 2 /*|| deltaPrev >= 10*/) { // Was tie with branch of 1 || dopo un tot pubblico in ogni caso
+
+					/* NOTICE: deltaPrev >= 10 to use only when trying 100% selfish. It disturbs other simulations */
+					if (deltaPrev == 0 && privateBranchLen == 2 /*|| deltaPrev >= 40*/) { // Was tie with branch of 1 || after a while publish in any case
 
 						System.out.println("Selfish miner " + nodeID + " broadcasting all private blocks ");
 
@@ -193,7 +195,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 			boolean broadcast = false;
 			if(publicBlockchain.receiveTransaction(t))
 				broadcast = true;
-			if(privateBlockchain.receiveTransaction(t))
+			if(isSelfish && privateBlockchain.receiveTransaction(t))
 				broadcast = true;
 
 			if(broadcast)
@@ -220,7 +222,7 @@ public class TinyNode extends SingleValueHolder implements CDProtocol, EDProtoco
 
 				if(receiveBlock(b, publicBlockchain)) {
 
-					if(deltaPrev <= 0) { /* <= 0 because the public chain could have added other blocks that were waiting! */
+					if(deltaPrev == 0) {
 						// They win
 
 						privateBlockchain = new CachedBlockchain(publicBlockchain);

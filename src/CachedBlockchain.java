@@ -77,7 +77,7 @@ public class CachedBlockchain {
 		//	orderedTransactionsInPool.add(cachedBlockchain.orderedTransactionsInPool.get(i));
 		orderedTransactionsInPool.addAll(cachedBlockchain.orderedTransactionsInPool);
 
-		// posso copiare solo le mappe chiavi valore perchè i valori non vengono modificati
+		// I can copy the mappings key -> value as long as the latter is not modified (it's a shared pointer)
 		memPoolOfTransactions = (HashMap<Integer, Transaction>) cachedBlockchain.memPoolOfTransactions.clone();
 		waitingBlocks = (HashMap<Integer, ArrayList<Block>>) cachedBlockchain.waitingBlocks.clone();
 	}
