@@ -2,13 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4f676745-89b6-497b-9ef4-51f2dafacd81" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/Results" afterPath="" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/consoleLog.txt" afterPath="$PROJECT_DIR$/consoleLog.txt" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/CachedBlockchain.java" afterPath="$PROJECT_DIR$/src/CachedBlockchain.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ErrorsToFix" afterPath="$PROJECT_DIR$/src/ErrorsToFix" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/TinyNode.java" afterPath="$PROJECT_DIR$/src/TinyNode.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/TinyNodeObserver.java" afterPath="$PROJECT_DIR$/src/TinyNodeObserver.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tinyCoin.cfg" afterPath="$PROJECT_DIR$/tinyCoin.cfg" />
     </list>
     <ignored path="$PROJECT_DIR$/bin/" />
@@ -37,18 +32,18 @@
       <file leaf-file-name="TinyNode.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/TinyNode.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-2796">
+            <state relative-caret-position="825">
               <caret line="65" column="4" lean-forward="false" selection-start-line="65" selection-start-column="4" selection-end-line="65" selection-end-column="4" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="TinyNodeObserver.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/TinyNodeObserver.java">
+      <file leaf-file-name="tinyCoin.cfg" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/tinyCoin.cfg">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="586">
-              <caret line="83" column="59" lean-forward="false" selection-start-line="83" selection-start-column="59" selection-end-line="83" selection-end-column="59" />
+            <state relative-caret-position="675">
+              <caret line="45" column="21" lean-forward="false" selection-start-line="45" selection-start-column="21" selection-end-line="45" selection-end-column="21" />
               <folding />
             </state>
           </provider>
@@ -57,8 +52,8 @@
       <file leaf-file-name="CachedBlockchain.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/CachedBlockchain.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="105">
-              <caret line="12" column="16" lean-forward="false" selection-start-line="12" selection-start-column="16" selection-end-line="12" selection-end-column="16" />
+            <state relative-caret-position="239">
+              <caret line="212" column="0" lean-forward="true" selection-start-line="212" selection-start-column="0" selection-end-line="212" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -85,6 +80,7 @@
       <find>broadcasts</find>
       <find>// I will receive it from my neighbours in any case, because of flooding</find>
       <find>broadcast</find>
+      <find>numberOfFo</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -108,10 +104,10 @@
         <option value="$PROJECT_DIR$/src/ErrorsToFix" />
         <option value="$PROJECT_DIR$/consoleLog.txt" />
         <option value="$PROJECT_DIR$/src/Results" />
-        <option value="$PROJECT_DIR$/tinyCoin.cfg" />
         <option value="$PROJECT_DIR$/src/TinyNode.java" />
         <option value="$PROJECT_DIR$/src/TinyNodeObserver.java" />
         <option value="$PROJECT_DIR$/src/CachedBlockchain.java" />
+        <option value="$PROJECT_DIR$/tinyCoin.cfg" />
       </list>
     </option>
   </component>
@@ -122,8 +118,8 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="123" />
-    <option name="y" value="29" />
+    <option name="x" value="732" />
+    <option name="y" value="92" />
     <option name="width" value="1369" />
     <option name="height" value="1229" />
   </component>
@@ -143,7 +139,6 @@
     </navigator>
     <panes>
       <pane id="Scope" />
-      <pane id="Scratches" />
       <pane id="PackagesPane" />
       <pane id="ProjectPane">
         <subPane>
@@ -173,6 +168,7 @@
           </PATH>
         </subPane>
       </pane>
+      <pane id="Scratches" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -626,11 +622,13 @@
       <workItem from="1498666820989" duration="3358000" />
       <workItem from="1498688340645" duration="2857000" />
       <workItem from="1498726869020" duration="2999000" />
+      <workItem from="1498735547246" duration="3239000" />
+      <workItem from="1498817218832" duration="72000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="70040000" />
+    <option name="totallyTimeSpent" value="73351000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -642,7 +640,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="123" y="29" width="1369" height="1229" extended-state="0" />
+    <frame x="732" y="92" width="1369" height="1229" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -653,7 +651,7 @@
       <window_info id="Capture Analysis" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3546462" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.35431033" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Properties" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
@@ -696,6 +694,54 @@
     <option name="FILTER_TARGETS" value="false" />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/src/TinyNode.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tinyCoin.cfg">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="675">
+          <caret line="45" column="21" lean-forward="false" selection-start-line="45" selection-start-column="21" selection-end-line="45" selection-end-column="21" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/CachedBlockchain.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3285">
+          <caret line="224" column="30" lean-forward="false" selection-start-line="224" selection-start-column="20" selection-end-line="224" selection-end-column="30" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/TinyNode.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="975">
+          <caret line="65" column="4" lean-forward="false" selection-start-line="65" selection-start-column="4" selection-end-line="65" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/TinyNodeObserver.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1140">
+          <caret line="83" column="59" lean-forward="false" selection-start-line="83" selection-start-column="59" selection-end-line="83" selection-end-column="59" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/CachedBlockchain.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="105">
+          <caret line="12" column="16" lean-forward="false" selection-start-line="12" selection-start-column="16" selection-end-line="12" selection-end-column="16" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/tinyCoin.cfg">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -734,14 +780,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tinyCoin.cfg">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="435">
-          <caret line="29" column="0" lean-forward="false" selection-start-line="29" selection-start-column="0" selection-end-line="29" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/TinyCoinMessage.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="15">
@@ -766,9 +804,17 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/tinyCoin.cfg">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="675">
+          <caret line="45" column="21" lean-forward="false" selection-start-line="45" selection-start-column="21" selection-end-line="45" selection-end-column="21" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/TinyNode.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2796">
+        <state relative-caret-position="825">
           <caret line="65" column="4" lean-forward="false" selection-start-line="65" selection-start-column="4" selection-end-line="65" selection-end-column="4" />
           <folding />
         </state>
@@ -776,8 +822,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/CachedBlockchain.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="105">
-          <caret line="12" column="16" lean-forward="false" selection-start-line="12" selection-start-column="16" selection-end-line="12" selection-end-column="16" />
+        <state relative-caret-position="239">
+          <caret line="212" column="0" lean-forward="true" selection-start-line="212" selection-start-column="0" selection-end-line="212" selection-end-column="0" />
           <folding />
         </state>
       </provider>

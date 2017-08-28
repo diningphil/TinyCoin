@@ -20,7 +20,6 @@ public class CachedBlockchain {
 
 	public long nodeID = -1; // DEBUGGING purposes
 
-	// NOTICE: by default this structure doesn't contain input transactions. It serves debugging purposes, as well as performing some block ID's check
 	private HashMap<Integer, Block> blockchain; // It represents the UTXO if we want, we have only output transactions
 	public Block head;
 	private ArrayList<Integer> UTXO; // bitcoin address --> amount of bitcoins in the blockchain (considering the longest chain)
@@ -58,23 +57,15 @@ public class CachedBlockchain {
 		numberOfForks = cachedBlockchain.numberOfForks;
 
 		acceptedTransactions = new TreeSet<>();
-		//for(Integer transID : cachedBlockchain.acceptedTransactions)
-		//	acceptedTransactions.add(transID);
 		acceptedTransactions.addAll(cachedBlockchain.acceptedTransactions);
 
 		UTXO = new ArrayList<>();
-		//for(int i = 0; i < cachedBlockchain.UTXO.size(); i++)
-		//	UTXO.add(cachedBlockchain.UTXO.get(i));
 		UTXO.addAll(cachedBlockchain.UTXO);
 
 		tempUTXO = new ArrayList<>();
-		//for(int i = 0; i < cachedBlockchain.tempUTXO.size(); i++)
-		//	tempUTXO.add(cachedBlockchain.tempUTXO.get(i));
 		tempUTXO.addAll(cachedBlockchain.tempUTXO);
 
 		orderedTransactionsInPool = new ArrayList<>();
-		//for(int i = 0; i < cachedBlockchain.orderedTransactionsInPool.size(); i++)
-		//	orderedTransactionsInPool.add(cachedBlockchain.orderedTransactionsInPool.get(i));
 		orderedTransactionsInPool.addAll(cachedBlockchain.orderedTransactionsInPool);
 
 		// I can copy the mappings key -> value as long as the latter is not modified (it's a shared pointer)
@@ -110,14 +101,6 @@ public class CachedBlockchain {
 	}
 
 	private Block buildBlock(long minerID) {
-
-		/*
-		Quindi devo assicurarmi solamente che il blocco sia valido nel
-		caso venga appeso alla blockchain. a quel punto son sicuro che le transazioni che ci
-		metto non sono a caso! Inoltre l'ordine di ricezione va bene per me,
-		ma non per gli altri in principio! Quindi devo basarmi sulla blockchain. lo stato può divergere localmente
-		ma la blockchain alla fine sarà la stessa con alta probabilità.
-		*/
 
 		// CAST TO INT! We won't never have a billion nodes in the simulation :)
 		Block b = new Block((int) minerID, head.blockID);
@@ -484,10 +467,7 @@ public class CachedBlockchain {
 					System.err.println("Inconsistency between memPool and orderedTransactions, fix your program!");
 			}
 		}
-	//	}
 	}
-
-	//Transazioni con id minore dovrebbero essere trattate prima, per evitare starvation!
 
 	public boolean receiveTransaction(Transaction t) {
 

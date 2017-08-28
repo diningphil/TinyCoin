@@ -38,8 +38,6 @@ public class TinyNodeObserver implements Control
 		 *  Ho bisogno di :
 		 * 	- numero di fork di un nodo (a convergenza dovrebbero essere le stesse per tutti)
 		 *  - percentuale di "selfish blocks" nella blockchain (guardando la catena più lunga ovviamente)
-		 *  - TODO percentuale di fork vinte da selfish miners
-		 *         (guardo i blocchi non nella catena principale con prevID corrispodente a punti di biforcazione, e ispeziono minerID)
 		 *  - il tempo necessario per risolvere le fork (max, min, avg)
 		 */
 		System.err.println("Observer started...");
@@ -92,7 +90,6 @@ public class TinyNodeObserver implements Control
 		while(descendingIt.hasNext()) {
 			int id = (int) descendingIt.next();
 
-
 			if(!seenIds.contains(id)) { // It belongs to a fork
 				int length = 0;
 				Block forkEnd = blockchain.getBlockWithID(id);
@@ -109,5 +106,4 @@ public class TinyNodeObserver implements Control
 			}
 		}
 	}
-
 }
